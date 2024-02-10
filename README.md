@@ -1,33 +1,44 @@
+# atproto-website-JA
+
+このリポジトリは、ATプロトコルの公式ドキュメンテーションページを、ChatGPTを使用して日本語に自動翻訳したものです。
+本リポジトリの誤訳等により生じたいかなる問題についても、当方は責任を負いかねます。
+
+誤訳の修正はIssue、またはPull requestまでお願い致します。
+
+以下は公式リポジトリのREADME.mdを翻訳したものです。
+
+---
+
 # atproto-website
 
-This repository contains the documentation for the AT Protocol, available to read at [atproto.com](https://atproto.com/).
+このリポジトリには、ATプロトコルのドキュメンテーションが含まれています。[atproto.com](https://atproto.com/) で読むことができます。
 
-To read documentation for the Bluesky API, go to [docs.bsky.app](https://www.docs.bsky.app/) or this [repo](https://github.com/bluesky-social/bsky-docs).
+Bluesky APIのドキュメンテーションを読むには、[docs.bsky.app](https://www.docs.bsky.app/) またはこの [リポジトリ](https://github.com/bluesky-social/bsky-docs) にアクセスしてください。
 ---
 
-### Making edits to atproto.com
+### atproto.comの編集
 
-- clone this repo
-- run `npm install`
-- run the development server with `npm run dev` or `yarn dev`
-- open [http://localhost:3000](http://localhost:3000) with your browser.
+- このリポジトリをクローンします
+- `npm install` を実行します
+- 開発サーバーを `npm run dev` または `yarn dev` で実行します
+- ブラウザで [http://localhost:3000](http://localhost:3000) を開きます。
 
 ---
 
-[pages/index.js](https://github.com/bluesky-social/atproto-website/blob/main/pages/index.js) generates [http://localhost:3000](http://localhost:3000) -- start there if you'd like to make changes.
+[pages/index.js](https://github.com/bluesky-social/atproto-website/blob/main/pages/index.js) は [http://localhost:3000](http://localhost:3000) を生成します。変更を加えたい場合は、ここから始めてください。
 
-The page auto-updates as you edit the file.
+ファイルを編集すると、ページが自動的に更新されます。
 
-### Are you a developer interested in building on atproto?
+### atproto上で開発を行いたい開発者の方へ
 
-Bluesky is an open social network built on the AT Protocol, a flexible technology that will never lock developers out of the ecosystems that they help build. With atproto, third-party can be as seamless as first-party through custom feeds, federated services, clients, and more.
+BlueskyはATプロトコル上に構築されたオープンソーシャルネットワークで、開発者をエコシステムから締め出さない柔軟な技術で構築されています。atprotoを使用することで、サードパーティはカスタムフィード、連携サービス、クライアントなどを通じて、ファーストパーティと同じくらいスムーズに動作できます。
 
-If you're a developer interested in building on atproto, we'd love to email you a Bluesky invite code. Simply share your GitHub (or similar) profile with us via [this form](https://forms.gle/BF21oxVNZiDjDhXF9).
+atproto上で開発を行いたい開発者の方は、Blueskyの招待コードをメールで送付させていただきます。GitHub（または類似のプロフィール）を[このフォーム](https://forms.gle/BF21oxVNZiDjDhXF9)からお知らせください。
 
-## License
+## ライセンス
 
-Documentation text and the atproto specifications are under Creative Commons Attribution (CC-BY).
+ドキュメンテーションテキストおよびatprotoの仕様はクリエイティブ・コモンズ・表示（CC-BY）のもとに提供されています。
 
-Inline code examples, example data, and regular expressions are under Creative Commons Zero (CC-0, aka Public Domain) and copy/pasted without attribution.
+インラインのコード例、例示データ、および正規表現はクリエイティブ・コモンズ・ゼロ（CC-0、別名パブリックドメイン）で提供され、帰属なしでコピー/貼り付けが可能です。
 
-Please see [LICENSE.txt]() with reminders about derivative works, and [LICENSE-CC-BY.txt]() for a copy of license legal text.
+派生作品に関するリマインダーが記載されている [LICENSE.txt]() と、ライセンスの法的テキストのコピーがある [LICENSE-CC-BY.txt]() をご参照ください。
