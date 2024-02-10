@@ -14,21 +14,21 @@ import {
 
 const features = [
   {
-    name: 'Federated social',
+    name: '分散型ソーシャルネットワーク',
     description:
-      "Connect with anyone on any service that's using the AT Protocol.",
+      "ATプロトコルを使用している任意のサービス上の誰とでも接続できます。",
     icon: AtSymbolIcon,
   },
   {
-    name: 'Algorithmic choice',
+    name: 'アルゴリズムの選択',
     description:
-      'Control how you see the world through an open market of algorithms.',
+      'オープンなアルゴリズムのマーケットを通じて世界をどのように見るかを制御できます。',
     icon: CodeBracketSquareIcon,
   },
   {
-    name: 'Portable accounts',
+    name: '移動可能なアカウント',
     description:
-      'Change hosts without losing your content, your follows, or your identity.',
+      'ホストを変更してもコンテンツ、フォロー、アイデンティティを失わずに移行できます。',
     icon: ArrowsUpDownIcon,
   },
 ]
@@ -54,15 +54,15 @@ function FeaturesSection() {
       <div className="mx-auto max-w-md px-4 text-center sm:max-w-3xl sm:px-6 lg:max-w-7xl lg:px-8">
         <h2 className="text-lg font-semibold text-blue-600">Introducing</h2>
         <p className="mt-2 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-          The Social Internet
+          ソーシャル・インターネット
         </p>
         <p className="mx-auto mt-5 max-w-prose text-xl text-gray-500">
-          The AT Protocol is a networking technology created to power the next generation of social applications.
-          The initial reference application, {' '}
+          ATプロトコルは、次世代のソーシャルアプリケーションを動かすために作られたネットワーキング技術です。
+          最初の参照アプリケーションである{' '}
           <Link href="https://bsky.app">
             <a className="text-blue-600 hover:underline">bsky.app</a>
           </Link>,{' '}
-          provides a global-scale microblogging experience.
+          は、グローバルスケールのマイクロブログ体験を提供しています。
         </p>
         <div className="mt-12">
           <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3 text-center">

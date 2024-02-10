@@ -17,20 +17,20 @@ export default function Hero() {
               </span>
             </h1>
             <p className="mx-auto mt-3 max-w-md text-base text-blue-100 sm:text-lg md:mt-5 md:max-w-3xl md:text-xl">
-              Social networking technology created by Bluesky
+              Blueskyが開発したソーシャル・ネットワーキング技術
             </p>
             <div className="mx-auto mt-5 max-w-md sm:flex sm:justify-center md:mt-8">
               <div className="rounded-md shadow">
                 <Link href="/guides/overview">
                   <a className="flex w-full items-center justify-center rounded-md border border-transparent bg-blue-600 px-8 py-3 text-base font-medium text-white hover:bg-blue-700 md:py-4 md:px-10 md:text-lg focus-visible:outline outline-yellow-500 outline-2">
-                    Protocol Overview
+                    プロトコルの概要
                   </a>
                 </Link>
               </div>
               <div className="mt-3 rounded-md shadow sm:mt-0 sm:ml-3">
                 <Link href="/specs/atp">
                   <a className="flex w-full items-center justify-center rounded-md border border-transparent bg-white px-8 py-3 text-base font-medium text-blue-600 hover:bg-gray-50 md:py-4 md:px-10 md:text-lg focus-visible:outline outline-yellow-500 outline-2">
-                    Specification
+                    プロトコルの仕様
                   </a>
                 </Link>
               </div>
