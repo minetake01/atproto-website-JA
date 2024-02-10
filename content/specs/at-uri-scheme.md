@@ -1,84 +1,84 @@
 ---
-title: AT URI scheme (at://)
-summary: A URI scheme for addressing ATP repository data.
+title: AT URIスキーム（at://）
+summary: ATPリポジトリデータをアドレス指定するためのURIスキーム。
+
 ---
 
-# AT URI Scheme (at://)
+# AT URIスキーム（at://）
 
-The AT URI scheme (`at://`) makes it easy to reference individual records in a specific repository, identified by either DID or handle. AT URIs can also be used to reference a collection within a repository, or an entire repository (aka, an identity).
+AT URIスキーム（`at://`）は、特定のリポジトリ内の個々のレコードを参照するのを簡単にします。これはDIDまたはハンドルによって識別された特定のリポジトリで、AT URIsはリポジトリ内のコレクションやリポジトリ全体（別名、アイデンティティ）を参照するためにも使用できます。
 
-Both of these AT URIs reference the same record in the same repository; one uses the account’s DID, and one uses the account’s handle.
+以下のAT URIsは同じリポジトリ内の同じレコードを参照しています。一方はアカウントのDIDを使用し、もう一方はアカウントのハンドルを使用しています。
 
 - `at://did:plc:44ybard66vv44zksje25o7dz/app.bsky.feed.post/3jwdwj2ctlk26`
 - `at://bnewbold.bsky.team/app.bsky.feed.post/3jwdwj2ctlk26`
 
 :::note
-**Caveats for Handle-based AT URIs**
+**ハンドルベースのAT URIの注意事項**
 
-AT URIs referencing handles are not durable.
+ハンドルを使用したAT URIsは耐久性がありません。
 
-If a user changes their handle, any AT URIs using that handle will become invalid and could potentially point to a record in another repo if the handle is reused.
+ユーザーがハンドルを変更すると、そのハンドルを使用しているAT URIsは無効になり、ハンドルが再利用される場合には別のリポジトリのレコードを指す可能性があります。
 
-AT URIs are not content-addressed, so the _contents_ of the record they refer to may also change over time.
+AT URIsはコンテンツアドレスではないため、それらが参照するレコードの_内容_も時間とともに変更される可能性があります。
 :::
 
-### Structure
+### 構造
 
-The full, general structure of an AT URI is:
+AT URIの完全で一般的な構造は次のとおりです。
 
 ```text
 "at://" AUTHORITY [ PATH ] [ "?" QUERY ] [ "#" FRAGMENT ]
 ```
 
-The **authority** part of the URI can be either a handle or a DID, indicating the identity associated with the repository. Note that a handle can refer to different DIDs (and thus different repositories) over time. See discussion below about strong references, and in "Usage and Implementation".
+URIの**authority**部分はハンドルまたはDIDのいずれかであり、リポジトリに関連するアイデンティティを示しています。ハンドルは時間とともに異なるDID（したがって異なるリポジトリ）を指すことができることに注意してください。強い参照に関するディスカッションと「使用法と実装」のセクションで説明されているように、DIDを指定するかどうかに関係なく、この部分は必須です。
 
-In current atproto Lexicon use, the **query** and **fragment** parts are not yet supported, and only a fixed pattern of paths are allowed:
+現在のatproto Lexiconの使用では、**query**および**fragment**の部分はまだサポートされておらず、特定のパスの固定パターンのみが許可されています。
 
 ```text
 "at://" AUTHORITY [ "/" COLLECTION [ "/" RKEY ] ]
 ```
 
-The **authority** section is required, must be normalized, and if a DID must be one of the "blessed" DID methods. The optional **collection** part of the path must be a normalized [NSID](./nsid). The optional **rkey** part of the path must be a valid [Record Key](./record-key).
+**authority**セクションは必須で、正規化されなければならず、DIDの場合は「blessed」DIDメソッドの1つである必要があります。パスのオプションの**collection**セクションは正規化された[NSID](./nsid)である必要があります。パスのオプションの**rkey**セクションは有効な[Record Key](./record-key)である必要があります。
 
-An AT URI pointing to a specific record in a repository is not a *strong* reference, in that it is not content-addressed. The record may change or be removed over time, or the DID itself may be deleted or unavailable. For `did:web`, control of the DID (and thus repository) may change over time. For AT URIs with a handle in the authority section, the handle-to-DID mapping can also change.
+リポジトリ内の特定のレコードを指すAT URIは*強い*参照ではないことに注意してください。それはコンテンツアドレスではありません。レコードは時間の経過とともに変更されるか削除される可能性があります。またはDID自体が削除されたり利用できなくなったりする可能性があります。 `did:web`の場合、DID（したがってリポジトリ）の制御は時間とともに変更される可能性があります。Authorityセクションのハンドルを使用したAT URIの場合、ハンドルからDIDへのマッピングも変更される可能性があります。
 
-A major semantic difference between AT URIs and common URL formats like `https://`, `ftp://`, or `wss://` is that the "authority" part of an AT URI does not indicate a network location for the indicated resource. Even when a handle is in the authority part, the hostname is only used for identity lookup, and is often not the ultimate host for repository content (aka, the handle hostname is often not the PDS host).
+AT URIsと`https://`、`ftp://`、`wss://`などの一般的なURLフォーマットとの主要な意味の違いは、AT URIの「authority」部分が示すリソースのネットワークの場所を示さないことです。ハンドルがAuthorityセクションにある場合でも、ホスト名はアイデンティティの検索にしか使用されず、通常はリポジトリコンテンツの最終的なホストではありません（別名、ハンドルのホスト名は通常PDSホストではありません）。
 
-### Generic URI Compliance
+### 一般的なURIの適合性
 
-AT URIs meet the generic syntax for Universal Resource Identifiers, as defined in IETF [RFC-3986](https://www.rfc-editor.org/rfc/rfc3986). They utilize some generic URI features outlined in that document, though not all. As a summary of generic URI parts and features:
+AT URIsは、IETF [RFC-3986](https://www.rfc-editor.org/rfc/rfc3986)で定義されているUniversal Resource Identifiersの一般的な構文を満たします。これらはその文書で概説されている一部の一般的なURIの機能を利用していますが、すべてではありません。一般的なURI部分と機能の要約として：
 
-- Authority part, preceded by double slash: supported
-- Empty authority part: not supported
-- Userinfo: not currently supported, but reserved for future use. a lone `@` character preceding a handle is not valid (eg, `at://@handle.example.com` is not valid)
-- Host and port separation: not supported. syntax conflicts with DID in authority part
-- Path part: supported, optional
-- Query: supported in general syntax, not currently used
-- Fragment: supported in general syntax, not currently used
-- Relative references: not yet supported
-- Normalization rules: supported in general syntax, not currently used
+- 二重スラッシュで先行するAuthority部分：サポートされています
+- 空のAuthority部分：サポートされていません
+- Userinfo：現在サポートされていませんが、将来の使用を予約しています。ハンドルの前に単独の`@`文字がある場合は無効です（例：`at://@handle.example.com`は無効です）
+- ホストとポートの分離：サポートされていません。構文がAuthority部分のDIDと競合しています
+- パス部分：サポートされており、オプションです
+- クエリ：一般的な構文でサポートされていますが、現在は使用されていません
+- フラグメント：一般的な構文でサポートされていますが、現在は使用されていません
+- 相対参照：まだサポートされていません
+- 正規化ルール：一般的な構文でサポートされていますが、現在は使用されていません
 
-AT URIs are not compliant with the WHATWG URL Standard ([https://url.spec.whatwg.org/](https://url.spec.whatwg.org/)). Un-encoded colon characters in DIDs in the authority part of the URI are disallowed by that standard. Note that it is possible to un-ambigiously differentiate a DID in the authority section from a `host:port` pair. DIDs always have at least two colons, always begin with `did:`, and the DID method can not contain digits.
+AT URIsはWHATWG URL Standard ([https://url.spec.whatwg.org/](https://url.spec.whatwg.org/))に準拠していません。URIのAuthority部分のDID内のコロン文字をエンコードせずに使用することは、この標準によって許可されていません。DIDと`host:port`ペアを区別することは可能です。DIDには常に少なくとも2つのコロンがあり、常に`did:`で始まり、DIDメソッドには数字を含めることができません。
 
-### Full AT URI Syntax
+### 完全なAT URI構文
 
-The full syntax for AT URIs is flexible to a variety of future use cases, including future extensions to the path structure, query parameters, and a fragment part. The full syntax rules are:
+AT URIsの完全な構文は、将来の使用ケースに対応する柔軟なもので、パス構造、クエリパラメータ、およびフラグメント部の将来の拡張を含みます。完全な構文規則は次のとおりです。
 
-- The overall URI is restricted to a subset of ASCII characters
-- For reference below, the set of unreserved characters, as defined in [RFC-3986](https://www.rfc-editor.org/rfc/rfc3986), includes alphanumeric (`A-Za-z0-9`), period, hyphen, underscore, and tilde (`.-_~`)
-- Maximum overall length is 8 kilobytes (which may be shortened in the future)
-- Hex-encoding of characters is permitted (but in practice not necessary)
-- The URI scheme is `at`, and an authority part preceded with double slashes is always required, so the URI always starts `at://`
-- An authority section is required and must be non-empty. the authority can be either an atproto Handle, or a DID meeting the restrictions for use with atproto. note that the authority part can *not* be interpreted as a host:port pair, because of the use of colon characters (`:`) in DIDs. Colons and unreserved characters should not be escaped in DIDs, but other reserved characters (including `#`, `/`, `$`, `&`, `@`) must be escaped.
-    - Note that none of the current "blessed" DID methods for atproto allow these characters in DID identifiers
-- An optional path section may follow the authority. The path may contain multiple segments separated by a single slash (`/`). Generic URI path normalization rules may be used.
-- An optional query part is allowed, following generic URI syntax restrictions
-- An optional fragment part is allowed, using JSON Path syntax
+- 全体のURIはASCII文字のサブセットに制限されています
+- 下記の参照のために、[RFC-3986](https://www.rfc-editor.org/rfc/rfc3986)で定義されている未予約文字のセットには、英数字（`A-Za-z0-9`）、ピリオド、ハイフン、アンダースコア、チルダ（`.-_~`）が含まれています
+- 最大全体長は8キロバイトです（将来的に短縮される可能性があります）
+- 文字の16進符号化が許可されていますが（実際のところ必要ではありません）、大文字と小文字は区別されます
+- URIスキームは`at`であり、先行する二重スラッシュを伴うAuthority部分が常に必要です。したがって、URIは常に`at://`で始まります
+- Authorityセクションは必須であり、空でなければなりません。Authorityはatprotoハンドルまたはatprotoで使用する制限を満たすDIDのいずれかである必要があります。Authority部分はDIDの場合はホスト:ポートのペアとして解釈できないため、コロン文字（`:`）が使用されています。DID内のコロンと未予約文字はエスケープしてはいけませんが、他の予約文字（`#`、`/`、`$`、`&`、`@`）はエスケープする必要があります。
+    - 現在の「blessed」DIDメソッドのいずれも、DID識別子でこれらの文字を許可していません
+- オプションのパスセクションがAuthorityに続く場合があります。パスには単一のスラッシュ（`/`）で区切られた複数のセグメントを含めることができます。一般的なURIパスの正規化ルールを使用できます。
+- オプションのクエリパートが一般的なURI構文の後に続く場合があります
+- オプションのフラグメントパートはJSON Path構文を使用して許可されています
 
+### 制限付きAT URI構文
 
-### Restricted AT URI Syntax
-
-A restricted sub-set of valid AT URIs are currently used in Lexicons for the `at-uri` type. Query parameters and fragments are not currently used. Trailing slashes are not allowed, including a trailing slash after the authority with no other path. The URI should be in normalized form (see "Normalization" section), with all of the individual sub-identifiers also normalized.
+現在、Lexiconsで`at-uri`タイプに使用される有効なAT URIのサブセットがあります。クエリパラメータとフラグメントは現在使用されていません。Authorityの後にパスがない場合、トレーリングスラッシュは許可されません。URIは正規化形式である必要があり、個々のサブ識別子もすべて正規化されている必要があります。
 
 ```text
 AT-URI        = "at://" AUTHORITY [ "/" COLLECTION [ "/" RKEY ] ]
@@ -88,64 +88,62 @@ COLLECTION    = NSID
 RKEY          = RECORD-KEY
 ```
 
+### 正規化
 
-### Normalization
+特にatprotoレコードに含まれる場合、表現が再現可能であり、簡単な文字列の等価性チェックで使用できるように、厳格な正規化に従うべきです。
 
-Particularly when included in atproto records, strict normalization should be followed to ensure that the representation is reproducible and can be used with simple string equality checks.
+- URIのいずれかの部分に不要な16進符号化は行わないでください
+- 16進符号化された文字の場合、16進符号化された文字は大文字である必要があります
+- URIスキームは小文字である必要があります
+- ハンドルとしてのAuthority：小文字
+- DIDとしてのAuthority：正規化形式であり、重複する16進符号化はありません。たとえば、DIDがすでに16進符号化されている場合は、パーセント記号を再度エンコードしないでください。
+- パス部分にトレーリングスラッシュはありません
+- パス部分に重複するスラッシュまたは「ドット」セクション（たとえば、`/./`または`/abc/../`）はありません
+- パス内のNSID：ドメインAuthority部分は小文字です
+- レコードキーは大文字と小文字を区別し、正規化されません
+- レポジトリやレコードを参照する場合、クエリとフラグメントの部分は含まれていない必要があります
 
-- No unnecessary hex-encoding in any part of the URI
-- Any hex-encoding hex characters must be upper-case
-- URI schema is lowercase
-- Authority as handle: lowercased
-- Authority as DID: in normalized form, and no duplicate hex-encoding. For example, if the DID is already hex-encoded, don’t re-encode the percent signs.
-- No trailing slashes in path part
-- No duplicate slashes or "dot" sections in path part (`/./` or `/abc/../` for example)
-- NSID in path: domain authority part lowercased
-- Record Key is case-sensitive and not normalized
-- Query and fragment parts should not be included when referencing repositories or records in Lexicon records
+URIのパスを正規化し、`..` / `.`相対参照を削除するための一般的なルールについては、[RFC-3986](https://www.rfc-editor.org/rfc/rfc3986)を参照してください。
 
-Refer to [RFC-3986](https://www.rfc-editor.org/rfc/rfc3986) for generic rules to normalize paths and remove `..` / `.` relative references.
+### 例
 
-
-### Examples
-
-Valid AT URIs (both general and Lexicon syntax):
+有効なAT URIs（一般的およびLexicon構文の両方）：
 
 ```text
 at://foo.com/com.example.foo/123
 ```
 
-Valid general AT URI syntax, invalid in current Lexicon:
+有効な一般的なAT URI構文、現在のLexiconでは無効：
 
 ```text
-at://foo.com/example/123     // invalid NSID
-at://computer                // not a valid DID or handle
-at://example.com:3000        // not a valid DID or handle
+at://foo.com/example/123     // 無効なNSID
+at://computer                // 有効なDIDまたはハンドルではありません
+at://example.com:3000        // 有効なDIDまたはハンドルではありません
 ```
 
-Invalid AT URI (in both contexts)
+無効なAT URI（両方のコンテキストで）
 
 ```text
-at://foo.com/                // trailing slash
-at://user:pass@foo.com       // userinfo not currently supported
+at://foo.com/                // トレーリングスラッシュ
+at://user:pass@foo.com       // 現在サポートされていないuserinfo
 ```
 
 
-### Usage and Implementation Guidelines
+### 使用および実装のガイドライン
 
-Generic URI and URL parsing libraries can sometimes be used with AT URIs, but not always. A key requirement is the ability to work with the authority (or origin) part of the URI as a simple string, without being parsed in to userinfo, host, and port sub-parts. Specifically: the Python 3 `urllib` module (from the standard library) works; the Javascript `url-parse` package works; the Golang `net/url` package does not work; and most of the popular Rust URL parsing crates do not work.
+一般的なURIおよびURLの解析ライブラリは、AT URIsで使用することができることがありますが、常にではありません。重要な要件は、URIのAuthority（またはオリジン）部分をユーザー情報、ホスト、およびポートのサブパーツに解析せずに、単純な文字列として操作できることです。具体的には、Python 3の`urllib`モジュール（標準ライブラリから）、Javascriptの`url-parse`パッケージが動作します。Golangの`net/url`パッケージは動作しません。および一般的なRust URL解析クレートのほとんどは動作しません。
 
-When referencing records, especially from other repositories, best practice is to use a DID in the authority part, not a handle. For application display, a handle can be used as a more human-readable alternative. In HTML, it is permissible to *display* the handle version of an AT-URI and *link* (`href`) to the DID version.
+特に他のリポジトリからレコードを参照する場合、最善の方法はAuthorityセクションにDIDを使用し、ハンドルではなくDIDを使用することです。アプリケーションの表示用には、ハンドルを使用して人間が読み取り可能な代替手段として使用できます。HTMLでは、AT-URIのハンドルバージョンを*表示*し、DIDバージョンに*リンク*（`href`）することが許可されています。
 
-When a *strong* reference to another record is required, best practice is to use a CID hash in addition to the AT URI.
+他のレコードへの*強い*参照が必要な場合、AT URIにCIDハッシュを追加することが最良の方法です。
 
-In Lexicons (APIs, records, and other contexts), sometimes a specific variant of an AT URI is required, beyond the general purpose `at-uri` string format. For example, references to records from inside records usually require a DID in the authority section, and the URI must include the collection and rkey path segments. URIs not meeting these criteria will fail to validate.
+Lexicons（API、レコードなど）では、特定のAT URIのバリアントが、一般的な`at-uri`文字列形式を超えて要求される場合があります。たとえば、レコード内からのレコードへの参照は通常、AuthorityセクションにDIDが必要であり、URIにはコレクションとrkeyのパスセグメントを含める必要があります。これらの基準を満たさないURIは検証に失敗します。
 
-Do not confuse the JSON Path fragment syntax with the Lexicon reference syntax. They both use `#`-based fragments to reference other fields in JSON documents, but, for example, JSON Path syntax starts with a slash (`#/key`).
+JSON Pathフラグメント構文とLexiconリファレンス構文を混同しないでください。両方ともJSONドキュメント内の他のフィールドを参照するために`#`ベースのフラグメントを使用しますが、たとえばJSON Path構文はスラッシュ（`#/key`）で始まります。
 
 
-### Possible Future Changes
+### 可能性のある将来の変更
 
-The maximum length constraint may change.
+最大長制約が変更される可能性があります。
 
-Relative references may be supported in Lexicons in `at-uri` fields. For example, one record referencing other records in the same repository could use `../<collection>/<rkey>` relative path syntax.
+Lexiconsの`at-uri`フィールドで相対参照がサポートされるかもしれません。たとえば、同じリポジトリ内の他のレコードを参照する1つのレコードが`../<collection>/<rkey>`相対パス構文を使用できます。

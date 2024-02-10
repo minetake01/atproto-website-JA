@@ -1,96 +1,98 @@
 ---
-title: Data Model
-summary: Consistent data encoding for records and messages.
+title: データモデル
+summary: レコードとメッセージのための一貫したデータエンコーディング。
 ---
 
-# Data Model
+# データモデル
 
-Records and messages in atproto are stored, transmitted, encoded, and authenticated in a consistent way. The core "data model" is based on [Interplanetary Linked Data (IPLD)](https://ipld.io/docs/data-model/), a specification for hash-linked data structures from the IPFS ecosystem.
+atprotoのレコードとメッセージは、一貫した方法で格納、転送、エンコード、および認証されます。コアの「データモデル」は、[Interplanetary Linked Data (IPLD)](https://ipld.io/docs/data-model/)に基づいており、これはIPFSエコシステムからのハッシュリンクデータ構造の仕様です。
 
-When data needs to be authenticated (signed), referenced (linked by content hash), or stored efficiently, it is encoded in Concise Binary Object Representation (CBOR). CBOR is an IETF standard roughly based on JSON. IPLD specifies a normalized subset of CBOR called **DAG-CBOR,** which is what atproto uses.
+データが認証（署名）、参照（コンテンツハッシュによるリンク）、または効率的に保存される必要がある場合、それはConcise Binary Object Representation (CBOR)でエンコードされます。CBORは、おおよそJSONに基づくIETF標準です。IPLDは、CBORの正規化されたサブセットである**DAG-CBOR**を指定しており、これがatprotoで使用されているものです。
 
-IPLD also specifies an analogous set of conventions of JSON called **DAG-JSON,** but atproto uses a different set of conventions when encoding JSON data.
+IPLDはまた、JSONの対応する一連の規約も指定していますが、atprotoではJSONデータをエンコードする際には異なる一連の規約を使用しています。
 
-The schema definition language for atproto is [Lexicon](/specs/lexicon). The IPLD Schema language is not used. Other lower-level data structures, like [repository](/specs/repository) internals, are not specified with Lexicons, but use the same data model and encodings.
+atprotoのスキーマ定義言語は[Lexicon](/specs/lexicon)です。IPLDスキーマ言語は使用されていません。他のより低レベルなデータ構造、例えば[repository](/specs/repository)の内部などは、Lexiconsでは指定されていませんが、同じデータモデルとエンコーディングを使用しています。
 
-In IPLD, distinct pieces of data are called **nodes,** and when encoded in binary (DAG-CBOR) result in a **block.** A node may have internal nested structure (maps or lists). Nodes may reference each other by string URLs or URIs, just like with regular JSON on the web. In IPLD, they can also reference each other strongly by hash, referred to in IPLD as a **link.** A set of linked nodes can form higher-level data structures like [Merkle Trees](https://en.wikipedia.org/wiki/Merkle_tree) or [Directed Acyclical Graphs (DAG)](https://en.wikipedia.org/wiki/Directed_acyclic_graph). Links can also refer to arbitrary binary data (blobs).
+IPLDでは、異なるデータの断片を**ノード**と呼び、バイナリ（DAG-CBOR）でエンコードすると**ブロック**になります。ノードには内部にネストされた構造（マップやリスト）がある場合があります。ノードは通常のJSONと同様に、文字列のURLやURIで互いを参照することができます。IPLDでは、ハッシュによって強力に互いを参照することもでき、これはIPLDで**リンク**と呼ばれています。リンクされたノードのセットは、[Merkle Trees](https://en.wikipedia.org/wiki/Merkle_tree)や[Directed Acyclical Graphs (DAG)](https://en.wikipedia.org/wiki/Directed_acyclic_graph)などのより高次のデータ構造を形成することができます。リンクはまた、任意のバイナリデータ（blob）を参照することもできます。
 
-Unlike URLs, hash references (links) do not encode a specific network location where the content can be found. The location and access mechanism must be inferred by protocol-level context. Hash references do have the property of being "self-certifying", meaning that returned data can be verified against the link hash. This makes it possible to redistribute content and trust copies even if coming from an untrusted party.
+URLとは異なり、ハッシュ参照（リンク）はコンテンツが見つかる特定のネットワーク場所をエンコードしない。場所とアクセスメカニズムはプロトコルレベルのコンテキストから推論される必要があります。ハッシュ参照は「自己証明的」であるという特性があり、返されたデータをリンクハッシュと照合できます。これにより、信頼できないパーティから来た場合でも、コンテンツを再配布し、コピーを信頼できるようになります。
 
-Links are encoded as [IPFS Content Identifiers](https://docs.ipfs.tech/concepts/content-addressing/#identifier-formats) (CIDs), which have both binary and string representations. CIDs include a metadata code which indicates whether it links to a node (DAG-CBOR) or arbitrary binary data. Some additional constraints on the use of CIDs in atproto are described below.
+リンクは[IPFS Content Identifiers](https://docs.ipfs.tech/concepts/content-addressing/#identifier-formats) (CIDs)としてエンコードされ、バイナリと文字列の表現があります。CIDsには、ノード（DAG-CBOR）または任意のバイナリデータにリンクするかを示すメタデータコードが含まれています。atprotoでのCIDsの使用に関するいくつかの追加の制約については以下で説明されています。
 
-In atproto, object nodes often include a string field `$type` that specifies their Lexicon schema. Data is mostly self-describing and can be processed in schema-agnostic ways (including decoding and re-encoding), but can not be fully validated without the schema on-hand or known ahead of time.
+atprotoでは、オブジェクトノードにはしばしば`$type`という文字列フィールドが含まれ、それがLexiconスキーマを指定しています。データは主に自己記述的であり、スキーマに依存せずに処理できます（デコードおよび再エンコードを含む）。ただし、スキーマが手元にないか事前に知られていない場合、データは完全に検証できません。
 
-## Data Types
+## データタイプ
 
-| Lexicon Type  | IPLD Type | JSON                 | CBOR                    | Note                    |
+| Lexicon タイプ | IPLD タイプ | JSON                 | CBOR                    | ノート                  |
 | ---           | ---       | ---                  | ---                     | ---                     |
-| `null`        | null      | Null                 | Special Value (major 7) |                         |
-| `boolean`     | boolean   | Boolean              | Special Value (major 7) |                         |
-| `integer`     | integer   | Number               | Integer (majors 0,1)    | signed, 64-bit          |
+| `null`        | null      | Null                 | 特殊値 (major 7)       |                         |
+| `boolean`     | boolean   | Boolean              | 特殊値 (major 7)       |                         |
+| `integer`     | integer   | Number               | Integer (majors 0,1)    | サインあり、64ビット     |
 | `string`      | string    | String               | UTF-8 String (major 3)  | Unicode, UTF-8          |
-| -             | float     | Number               | Special (major 7)       | not allowed in atproto  |
-| `bytes`       | bytes     | `$bytes` Object      | Byte String (major 2)   |                         |
-| `cid-link`    | link      | `$link` Object       | CID (tag 42)            | CID                     |
+| -             | float     | Number               | 特殊 (major 7)          | atprotoでは許可されていません |
+| `bytes`       | bytes     | `$bytes` オブジェクト | Byte String (major 2)   |                         |
+| `cid-link`    | link      | `$link` オブジェクト  |
+
+ CID (tag 42)            | CID                     |
 | `array`       | list      | Array                | Array (major 4)         |                         |
-| `object`      | map       | Object               | Map (major 5)           | keys are always strings |
-| `blob`        | -         | `$type: blob` Object | `$type: blob` Map       |                         |
+| `object`      | map       | Object               | Map (major 5)           | キーは常に文字列です       |
+| `blob`        | -         | `$type: blob` オブジェクト | `$type: blob` マップ |                         |
 
-`blob` is for references to files, such as images. It includes basic metadata like MIME Type and size (in bytes).
+`blob`はファイルへの参照（例: 画像）のためのものです。基本的なメタデータ（MIMEタイプとサイズ（バイト単位））も含まれています。
 
-As a best practice to ensure Javascript compatibility with default types, `integer` should be limited to 53 bits of precision. Note that JSON numbers can have an arbitrary number of digits, but `integer` is limited to 64 bits even ignoring Javascript.
+デフォルトの型との互換性を確保するために、JavaScriptと整合するためには`integer`は53ビットの精度に制限すべきです。JSONの数値は任意の桁数を持つことができますが、JavaScriptを無視しても`integer`は64ビットに制限されています。
 
-Lexicons can include additional validation constraints on individual fields. For example, integers can have maximum and minimum values. Data can not be validated against these additional constraints without access to the relevant Lexicon schema, but there is a concept of validating free-form JSON or CBOR against the atproto data model in an abstract sense. For example, a JSON object with a nested `$bytes` object with a boolean instead of a base64-encoded string might be valid JSON, but can never be valid under the atproto data model.
+Lexiconsは個々のフィールドに追加の検証制約を含めることができます。たとえば、整数は最大および最小値を持つことができます。これらの追加の制約を有効にするには、関連するLexiconスキーマにアクセスする必要がありますが、抽象的な意味でatprotoデータモデルに対して自由な形式のJSONまたはCBORを検証する概念があります。たとえば、`$bytes`オブジェクトにベース64エンコードされた文字列ではなくブール値が含まれるJSONオブジェクトは有効なJSONかもしれませんが、atprotoデータモデルには決して有効ではありません。
 
-Lexicon string fields can have additional `format` type information associated with them for validation, but as with other validation constraints this information is not available without the Lexicon itself.
+Lexicon文字列フィールドには、検証のために関連付けられた`format`タイプ情報が追加できますが、他の検証制約と同様に、この情報はLexicon自体がないと利用できません。
 
-### Nullable and False-y
+### NullableとFalse-y
 
-In the atproto data model there is a semantic difference between explicitly setting an map field to `null` and not including the field at all. Both JSON and CBOR have the same distinction.
+atprotoデータモデルでは、明示的にマップフィールドを`null`に設定することと、フィールドを含まないこととのセマンティックな違いがあります。JSONとCBORの両方にこの違いがあります。
 
-Null or missing fields are also distinct from "false-y" value like `false` (for booleans), `0` (for integers), empty lists, or empty objects.
+また、`false`（ブール）、`0`（整数）、空のリスト、または空のオブジェクトなどの「false-y」な値とは異なり、`null`または欠落したフィールドも区別されます。
 
-### Why No Floats?
+### なぜFloatがないのか？
 
-IPLD, CBOR, and JSON all natively support floating point numbers, so why does atproto go out of the way to disallow them?
+IPLD、CBOR、およびJSONはすべてネイティブで浮動小数点数をサポートしていますが、なぜatprotoはそれらを明示的に無効にするのでしょうか？
 
-The IPLD specification describes some of the complexities and sharp edges when working with floats in a content-addressable world. In short, de-serializing in to machine-native format, then later re-encoding, is not always consistent. This is definitely true for special values and corner-cases, but can even be true with "normal" float values on less-common architectures.
+IPLD仕様は、浮動小数点数をコンテンツアドレッシング可能な世界で取り扱う際の複雑さとシャープエッジについて説明しています。要するに、マシンネイティブ形式に逆シリアル化してから後で再エンコードすることが常に一貫していないということです。これは特殊な値や特殊なケースだけでなく、一般的でないアーキテクチャでも「通常」の浮動小数点値に当てはまる可能性があります。
 
-It may be possible to come up with rules to ensure reliable round-trip encoding of floats in the future, but for now we disallow floats.
+将来的には、浮動小数点数を信頼性のあるラウンドトリップエンコーディングを確実にするためのルールを考案することができるかもしれませんが、現時点では浮動小数点数は無効にしています。
 
-If you have a use-case where integers can not be substituted for floats, we recommend encoding the floats as strings or even bytes. This provides a safe default round-trip representation.
+整数では浮動小数点数を代替できないユースケースがある場合は、浮動小数点数を文字列またはバイトとしてエンコードすることをお勧めします。これにより、安全なデフォルトのラウンドトリップ表現が得られます。
 
-## `blob` Type
+## `blob` タイプ
 
-References to "blobs" (arbitrary files) have a consistent format in atproto, and can be detected and processed without access to any specific Lexicon. That is, it is possible to parse nodes and extract any blob references without knowing the schema.
+"blobs"（任意のファイル）への参照は、atprotoで一貫した形式を持ち、スキーマにアクセスせずに検出および処理することができます。つまり、スキーマを知らなくてもノードを解析し、blobへの参照を抽出することができます。
 
-Blob nodes are maps with following fields:
+Blobノードは次のフィールドを持つマップです：
 
-- `$type` (string, required): fixed value `blob`. Note that this is not a valid NSID.
-- `ref` (link, required): CID reference to blob, with multicodec type `raw`. In JSON, encoded as a `$link` object as usual
-- `mimeType` (string, required, not empty): content type of blob. `application/octet-stream` if not known
-- `size` (integer, required, positive, non-zero): length of blob in bytes
+- `$type`（文字列、必須）：固定値`blob`。これは有効なNSIDではありません。
+- `ref`（link、必須）：blobへのCID参照。JSONでは通常のように`$link`オブジェクトとしてエンコードされます。
+- `mimeType`（文字列、必須、空でない）：blobのコンテンツタイプ。不明な場合は`application/octet-stream`。
+- `size`（整数、必須、正、非ゼロ）：バイト単位でのblobの長さ
 
-There is also a deprecated legacy blob format, with some records in the wild still containing blob references in this format:
+また、非推奨のレガシーなblob形式もあり、依然としてこの形式のblob参照を含む一部のレコードが存在しています：
 
-- `cid` (string, required): a CID in *string* format, not *link* format
-- `mimeType` (string, required, not empty): same as `mimeType` above
+- `cid`（文字列、必須）：リンク形式ではなく、文字列形式のCID
+- `mimeType`（文字列、必須、空でない）：上記の`mimeType`と同じ
 
-Note that the legacy format has no `$type` and can only be parsed for known Lexicons. Implementations should not throw errors when encountering the old format, but should never write them, and it is acceptable to only partially support them.
+なお、レガシーフォーマットには`$type`がなく、既知のLexiconsに対してのみ解析できます。実装では古いフォーマットに遭遇したときにエラーをスローしてはならず、それらを書き込まないようにし、部分的にしかサポートしなくても構いません。
 
-## JSON Representation
+## JSON表現
 
-atproto uses its own conventions for JSON, instead of using DAG-JSON directly. The main motivation was to have more idiomatic and human-readable representations for `link` and `bytes` in HTTP APIs. The DAG-JSON specification itself mentions that it is primarily oriented toward debugging and development environments, and we found that the use of `/` as a field key was confusing to developers.
+atprotoはDAG-JSONを直接使用せず、独自のJSON表記規則を使用しています。主な動機はHTTP APIでの`link`および`bytes`のためのより慣用的で人間にとって読みやすい表現を持つことでした。DAG-JSON仕様自体は、デバッグおよび開発環境向けに主に向けられていると述べており、`/`をフィールドキーとして使用することが開発者にとって混乱のもとになると判断されました。
 
-Normalizations like key sorting are also not required or enforced when using JSON in atproto: only DAG-CBOR is used as a byte-reproducible representation.
+JSONをatprotoで使用する場合、キーのソートなどの正規化は必要ありません。バイト再現可能な表現としてはDAG-CBORのみが使用されます。
 
-The encoding for most of the core and compound types is straight forward, with only `link` and `bytes` needing special treatment.
+コアおよび複合型のほとんどのエンコーディングは直感的であり、`link`および`bytes`のみが特別な取り扱いを必要とします。
 
 ### `link`
 
-The JSON encoding for an IPLD Link is an object with the single key `$link` and the string-encoded CID as a value.
+IPLDリンクのJSONエンコーディングは、単一のキー`$link`と、文字列エンコードされたCIDを値とするオブジェクトです。
 
-For example, a node with a single field `"exampleLink"` with type `link` would encode in JSON like:
+たとえば、タイプが`link`のフィールド `"exampleLink"` 1 つだけを持つノードは、以下のようにJSONでエンコードされます：
 
 ```
 {
@@ -101,13 +103,13 @@ For example, a node with a single field `"exampleLink"` with type `link` would e
 
 ```
 
-For comparison, this is very similar to the DAG-JSON encoding, but substitutes `$link` as the key name instead of `/` (single-character, forward slash).
+比較のために、これはDAG-JSONエンコーディングに非常に似ていますが、キー名が`$link`に置き換わっています（単一文字のスラッシュではなく）。
 
 ### `bytes`
 
-The JSON encoding for bytes is an object with the single key `$bytes` and string value with the base64-encoded bytes. The base64 scheme is the one specified in [RFC-4648, section 4](https://datatracker.ietf.org/doc/html/rfc4648#section-4), frequently referred to as simple "base64". This scheme is not URL-safe, and `=` padding is optional.
+バイトのJSONエンコーディングは、単一のキー`$bytes`と、base64でエンコードされたバイトを含む文字列値のオブジェクトです。このスキームは[RFC-4648、セクション4](https://datatracker.ietf.org/doc/html/rfc4648#section-4)で指定されているもので、「シンプルなbase64」として頻繁に参照されます。このスキームはURLセーフではなく、`=`のパディングはオプションです。
 
-For example, a node with a single field `"exampleBytes"` with type `bytes` would be represented in JSON like:
+たとえば、タイプが`bytes`のフィールド `"exampleBytes"` 1 つだけを持つノードは、以下のようにJSONで表されます：
 
 ```
 {
@@ -118,39 +120,39 @@ For example, a node with a single field `"exampleBytes"` with type `bytes` would
 
 ```
 
-For comparison, the DAG-JSON encoding has two nested objects, with outer key `/` (single-character, forward slash), inner key `bytes`, and the same base64 encoding.
+比較のために、DAG-JSONエンコーディングは2つのネストされたオブジェクトを持ち、外側のキーは`/`（単一文字のスラッシュ）、内側のキーは`bytes`で、同じbase64エンコーディングです。
 
-## Link and CID Formats
+## リンクとCIDのフォーマット
 
-The [IPFS CID specification](https://github.com/multiformats/cid) is very flexible. It supports a wide variety of hash types, a field indicating the "type" of content being linked to, and various string encoding options. These features are valuable to allow evolution over time, but to maximize interoperability among implementations, only a specific "blessed" set of CID types are allowed.
+[IPFS CID仕様](https://github.com/multiformats/cid)は非常に柔軟です。さまざまなハッシュタイプ、リンクされているコンテンツの「タイプ」を示すフィールド、およびさまざまな文字列エンコーディングオプションをサポートしています。これらの機能は時間の経過とともに進化するために貴重ですが、実装間の相互運用性を最大化するためには、特定の「祝福された」CIDタイプのみが許可されます。
 
-The blessed formats for CIDs in atproto are:
+atprotoのCIDのための祝福されたフォーマットは次のとおりです：
 
 - CIDv1
-- multibase: binary serialization within DAG-CBOR `link` fields, and `base32` for string encoding
-- multicodec: `dag-cbor` (0x71) for links to data objects, and `raw` (0x55) for links to blobs
-- multihash: `sha-256` with 256 bits (0x12) is preferred
+- multibase：DAG-CBOR `link`フィールドおよび文字列エンコーディングのためのバイナリシリアライゼーションで`base32`を使用
+- multicodec：データオブジェクトへのリンクのために`dag-cbor`（0x71）、blobへのリンクのために`raw`（0x55）を使用
+- multihash：256ビットのSHA-256（0x12）が推奨されています
 
-The use of SHA-256 is a stable requirement in some contexts, such as the repository MST nodes. In other contexts, like referencing media blobs, there will likely be a set of "blessed" hash types which evolve over time. A balance needs to be struck between protocol flexibility on the one hand (to adopt improved hashes and remove weak ones), and ensuring broad and consistent interoperability throughout an ecosystem of protocol implementations.
+SHA-256の使用は、リポジトリMSTノードなど、一部の文脈での安定した要件です。他の文脈では、メディアブロブの参照など、時間の経過と共に進化する「祝福された」ハッシュタイプのセットがある可能性があります。プロトコルの柔軟性と（改良されたハッシュを採用し、弱いものを削除するためのもの）と、プロトコルの実装のエコシステム全体で広範で一貫した相互運用性を確保する必要があります。
 
-There are several ways to include a CID hash reference in an atproto object:
+atprotoオブジェクトでCIDハッシュ参照を含めるためのいくつかの方法があります：
 
-- `link` field type (Lexicon type `cid-link`). In DAG-CBOR encodes as a binary CID (multibase type 0x00) in a bytestring with CBOR tag 42. In JSON, encodes as `$link` object (see above)
-- `string` field type, with Lexicon string format `cid`. In DAG-CBOR and JSON, encodes as a simple string
-- `string` field type, with Lexicon string format `uri`, with URI scheme `ipld://`
+- `link` フィールドタイプ（Lexiconタイプ `cid-link`）。DAG-CBORでは、バイナリCID（multibaseタイプ0x00）をCBORタグ42のバイト列としてエンコードします。JSONでは、`$link` オブジェクトとしてエンコードされます（上記参照）。
+- `string` フィールドタイプ、Lexicon文字列フォーマット `cid` を使用。DAG-CBORおよびJSONでは、単純な文字列としてエンコードされます。
+- `string` フィールドタイプ、Lexicon文字列フォーマット `uri` を使用し、URIスキームが `ipld://` の場合。
 
-## Usage and Implementation Guidelines
+## 使用および実装ガイドライン
 
-When working with the deprecated/legacy "blob" format, it is recommend to store in the same internal representation as regular "blob" references, but to set the `size` to zero or a negative value. This field should be checked when re-serializing to ensure proper round-trip behavior and avoid ever encoding a zero or negative `size` value in the normal object format.
+非推奨の/レガシーな「blob」フォーマットで作業する場合、通常の「blob」参照と同じ内部表現で保存することをお勧めしますが、`size` をゼロまたは負の値に設定します。このフィールドは、正しいラウンドトリップ動作を確認し、通常のオブジェクトフォーマットでゼロまたは負の `size` 値をエンコードしないようにするために、再シリアル化時に確認する必要があります。
 
-## Security and Privacy Considerations
+## セキュリティとプライバシーに関する考慮事項
 
-There are a number of resource-consumption attacks possible when parsing untrusted CBOR content. It is recommended to use a library that automatically protects against huge allocations, deep nesting, invalid references, etc. This is particularly important for libraries implemented in languages without strong memory safety, such as C and C++. Note that high-level languages frequently wrap parsers written in lower-level languages.
+信頼できないCBORコンテンツを解析する際には、多くのリソース消費攻撃が可能です。巨大な割り当て、深いネスト、無効な参照などに対して自動的に保護するライブラリの使用が推奨されています。これは特に、CやC++などのメモリセーフティが弱い言語で実装されたライブラリにとって重要です。高水準の言語はしばしば、より低水準の言語で書かれたパーサーをラップしています。
 
-## Possible Future Changes
+## 可能性のある将来の変更
 
-Floats may be supported in one form or another.
+浮動小数点数はある形式でサポートされるかもしれません。
 
-The legacy "blob" format may be entirely removed, if all known records and repositories can be rewritten.
+すべての既知のレコードとリポジトリが書き直せる場合、古い「blob」フォーマットは完全に削除されるかもしれません。
 
-Additional hash types are likely to be included in the set of "blessed" CID configurations.
+追加のハッシュタイプは「祝福された」CID構成のセットに含まれる可能性があります。

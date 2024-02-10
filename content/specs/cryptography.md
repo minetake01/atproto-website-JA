@@ -1,74 +1,71 @@
 ---
-title: Cryptography
-summary: Cryptographic systems, curves, and key types used in AT Protocol
+title: 暗号学
+summary: AT Protocolで使用される暗号システム、曲線、および鍵の種類
 ---
 
-# Cryptography
+# 暗号学
 
-Two elliptic curves are currently supported throughout the protocol, and implementations are expected to fully support both:
+プロトコル全体で現在サポートされているのは2つの楕円曲線であり、実装は両方を完全にサポートすることが期待されています。
 
-- `p256` elliptic curve: aka "NIST P-256", aka `secp256r1` (note the `r`), aka `prime256v1`
-    - This curve *is* included in the WebCrypto API. It is commonly supported by personal device hardware (Trusted Platform Modules (TPMs) and mobile Secure Enclaves), and by cloud Hardware Security Modules (HSMs)
-- `k256` elliptic curve: aka "NIST K-256", aka `secp256k1` (note the `k`)
-    - This curve *is not* included in the WebCrypto API. It is used in Bitcoin and other cryptocurrencies, and as a result is broadly supported by personal secret key management technologies. It is also supported by cloud HSMs.
+- `p256`楕円曲線：別名"NIST P-256"、`secp256r1`（`r`に注意）、`prime256v1`とも呼ばれます
+    - この曲線はWebCrypto APIに含まれています。個人デバイスハードウェア（Trusted Platform Modules（TPMs）およびモバイルセキュアエンクレーブ）やクラウドハードウェアセキュリティモジュール（HSMs）で一般的にサポートされています
+- `k256`楕円曲線：別名"NIST K-256"、`secp256k1`（`k`に注意）
+    - この曲線はWebCrypto APIには含まれていません。これはBitcoinおよび他の仮想通貨で使用され、その結果、個人の秘密鍵管理技術で広くサポートされています。クラウドHSMsでもサポートされています。
 
-Because of the subtle visual distinction when the full curve names are written out, we often refer to them as `p256` or `k256`.
+完全な曲線名を書いたときの微妙な視覚的な違いのため、通常、`p256`または`k256`として言及します。
 
-The atproto reference implementation from Bluesky supports both curves in all contexts, and creates `k256`  key pairs by default.
+Blueskyのatprotoリファレンス実装は、すべてのコンテキストで両方の曲線をサポートし、デフォルトで`k256`鍵ペアを作成します。
 
-Key points for both systems have loss-less "compressed" representations, which are useful when sharing the public keys. This is usually supported natively for `k256`, but sometimes requires extra methods or jumping through hoops for `p256`. You can read more about this at: [02, 03 or 04? So What Are Compressed and Uncompressed Public Keys?](https://medium.com/asecuritysite-when-bob-met-alice/02-03-or-04-so-what-are-compressed-and-uncompressed-public-keys-6abcb57efeb6).
+両システムの鍵ポイントには損失のない「圧縮」表現があり、これは公開鍵を共有する際に便利です。これは通常、`k256`に対してはネイティブでサポートされていますが、`p256`に対しては追加のメソッドや手順が必要な場合があります。これについては、[02, 03 or 04? So What Are Compressed and Uncompressed Public Keys?](https://medium.com/asecuritysite-when-bob-met-alice/02-03-or-04-so-what-are-compressed-and-uncompressed-public-keys-6abcb57efeb6)で詳細を読むことができます。
 
-A common pattern when signing data in atproto is to encode the data in DAG-CBOR, hash the CBOR bytes with SHA-256, yielding raw bytes (not a hex-encoded string), and then sign the hash bytes.
+atprotoでデータに署名する際の一般的なパターンは、データをDAG-CBORでエンコードし、CBORバイトをSHA-256でハッシュし、生のバイト（16進数のエンコードではなく）を取得した後、そのハッシュバイトに署名することです。
 
+## ECDSA署名の操作可能性
 
-## ECDSA Signature Malleability
+一部のECDSA署名は、新しい異なるが有効な署名を生成するように変換できます。これには秘密署名キーまたは署名されたデータへのアクセスは必要ありません。このプロパティを使用して可能な攻撃の範囲は限定されていますが、これは予期しないプロパティです。
 
-Some ECDSA signatures can be transformed to yield a new distinct but still-valid signature. This does not require access to the private signing key or the data that was signed. The scope of attacks possible using this property is limited, but it is an unexpected property.
+特に`k256`に関しては、「low-S」署名と「high-S」署名の違いがあり、[Bitcoin BIP-0062](https://github.com/bitcoin/bips/blob/master/bip-0062.mediawiki)で議論されています。
 
-For `k256` specifically, the distinction is between "low-S" and "high-S" signatures, as discussed in [Bitcoin BIP-0062](https://github.com/bitcoin/bips/blob/master/bip-0062.mediawiki).
+atprotoでは、「low-S」署名バリアントの使用が`p256`および`k256`の両方で必要です。
 
-In atproto, use of the "low-S" signature variant is required for both `p256` and `k256` curves.
+atprotoでは、署名は常に暗号ライブラリが提供する検証ルーチンを使用して検証されるべきであり、署名値を生のバイトとして比較することは避けるべきです。
 
-In atproto, signatures should always be verified using the verification routines provided by the cryptographic library, never by comparing signature values as raw bytes.
+## 公開鍵エンコード
 
+公開鍵を文字列としてエンコードする際、推奨される表現はマルチベース（特に`base58btc`を使用）およびマルチコードプレフィックスを使用して特定の鍵タイプを示すことです。エンコード自体に鍵のタイプに関するメタデータを埋め込むことで、それらは曖昧さなく解析できます。この形式で公開鍵をエンコードするプロセスは次のとおりです。
 
-## Public Key Encoding
+- 公開鍵の曲線「ポイント」をバイトとしてエンコードします。小さい「コンパクト」または「圧縮」表現を使用するようにしてください。これは通常、`k256`にとっては簡単ですが、`p256`キーに対しては特別な引数や構成が必要な場合があります
+- 適切な曲線マルチコーデック値を、varintでエンコードされたバイトとして、鍵バイトの前に追加します：
+    - `p256`（圧縮、33バイトの鍵長）：`p256-pub`、コード0x1200、varintでエンコードされたバイト：[0x80, 0x24]
+    - `k256`（圧縮、33バイトの鍵長）：`secp256k1-pub`、コード0xE7、varintバイト：[0xE7, 0x01]
+- 結合されたバイトを`base58btc`でエンコードし、`z`文字でプレフィックスを付けて、マルチベースエンコードされた文字列を生成します
 
-When encoding public keys as strings, the preferred representation uses multibase (with `base58btc` specifically) and a multicode prefix to indicate the specific key type. By embedding metadata about the type of key in the encoding itself, they can be parsed unambiguously. The process for encoding a public key in this format is:
+逆のデコードプロセスは同じで、識別された曲線タイプをコンテキストとして使用します。
 
-- Encode the public key curve "point" as bytes. Be sure to use the smaller "compact" or "compressed" representation. This is usually easy for `k256`, but might require a special argument or configuration for `p256` keys
-- Prepend the appropriate curve multicodec value, as varint-encoded bytes, in front of the key bytes:
-    - `p256` (compressed, 33 byte key length): `p256-pub`, code 0x1200, varint-encoded bytes: [0x80, 0x24]
-    - `k256` (compressed, 33 byte key length): `secp256k1-pub`, code 0xE7, varint bytes: [0xE7, 0x01]
-- Encode the combined bytes with with `base58btc`, and prefix with a `z` character, yielding a multibase-encoded string
+`did:key`識別子としてキーをエンコードするには、上記のマルチベースエンコーディングを使用し、ASCIIプレフィックス`did:key:`を追加します。この識別子は、DID PLCメソッドの内部実装の一部として使用されます。
 
-The decoding process is the same in reverse, using the identified curve type as context.
+[atproto DID仕様書](/specs/did)に記載されている、マルチコーデックタイプの値を含まないレガシーマルチベースエンコーディングのバリアントに注意してください。このフォーマットは非推奨です。
 
-To encode a key as a `did:key` identifier, use the above multibase encoding, and add the ASCII prefix `did:key:`. This identifier is used as an internal implementation detail in the DID PLC method.
+### エンコード例
 
-Note that there is a variant legacy multibase encoding described in the [atproto DID specification document](/specs/did), which does not include a multicodec type value, and uses uncompressed byte encoding of keys. This format is deprecated.
-
-### Encoded Examples
-
-A P-256 public key, encoded in multibase (with multicodec), and as `did:key`:
+P-256の公開鍵、マルチベース（マルチコーデックあり）、および`did:key`としてエンコードされた例：
 
 ```
 zDnaembgSGUhZULN2Caob4HLJPaxBh92N7rtH21TErzqf8HQo
 did:key:zDnaembgSGUhZULN2Caob4HLJPaxBh92N7rtH21TErzqf8HQo
 ```
 
-A K-256 public key, encoded in multibase (with multicodec), and as `did:key`:
+K-256の公開鍵、マルチベース（マルチコーデックあり）、および`did:key`としてエンコードされた例：
 
 ```
 zQ3shqwJEJyMBsBXCWyCBpUBMqxcon9oHB7mCvx4sSpMdLJwc
 did:key:zQ3shqwJEJyMBsBXCWyCBpUBMqxcon9oHB7mCvx4sSpMdLJwc
 ```
 
-## Usage and Implementation Guidelines
+## 使用および実装のガイドライン
 
-There is no specific recommended byte or string encoding for private keys across the atproto ecosystem. Sometimes simple hex encoding is used, sometimes multibase with or without multicodec type information.
+atprotoエコシステム全体でのプライベートキーの特定の推奨バイトまたは文字列エンコーディングはありません。時折、単純な16進数エンコーディングが使用されることもありますし、時にはマルチベースとマルチコーデックタイプ情報の有無で使用されることもあります。
 
+## 可能性のある将来の変更
 
-## Possible Future Changes
-
-The set of supported cryptographic systems is expected to evolve slowly. There are significant interoperability and implementation advantages to having as few systems as possible at any point in time.
+サポートされる暗号システムのセットはゆっくりと進化すると予想されています。特定の時点で可能な限り少ないシステムを持つことには、相互運用性と実装上の利点があります。

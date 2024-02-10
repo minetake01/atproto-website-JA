@@ -1,24 +1,24 @@
 ---
-title: Personal Data Repositories
-summary: A guide to the AT Protocol repo structure.
+title: パーソナルデータリポジトリ
+summary: AT Protocol リポジトリ構造のガイド
 tldr:
-  - A data repository is a collection of signed data
-  - They're like Git repos but for database records
-  - Users put their public activity in these repos
+  - データリポジトリは署名されたデータのコレクションです
+  - これらはデータベースレコードのためのGitリポジトリのようなものです
+  - ユーザーはこれらのリポジトリに公開活動データを追加します
 ---
 
-# Data Repositories
+# データリポジトリ
 
-A data repository is a collection of data published by a single user. Repositories are self-authenticating data structures, meaning each update is signed and can be verified by anyone.
+データリポジトリは単一のユーザーによって公開されたデータのコレクションです。リポジトリは自己認証データ構造であり、各更新は署名され、誰でも検証できる仕組みです。
 
-They are described in more depth in the [Repository specification](/specs/repository).
+これについての詳細は[リポジトリ仕様](/specs/repository)で説明されています。
 
-## Data Layout
+## データレイアウト
 
-The content of a repository is laid out in a [Merkle Search Tree (MST)](https://hal.inria.fr/hal-02303490/document) which reduces the state to a single root hash. It can be visualized as the following layout:
+リポジトリの内容は[Merkle Search Tree (MST)](https://hal.inria.fr/hal-02303490/document)に配置され、状態を単一のルートハッシュに削減します。以下のレイアウトとして視覚化できます：
 
 <pre style="line-height: 1.2;"><code>┌────────────────┐
-│     Commit     │  (Signed Root)
+│     Commit     │  (署名ルート)
 └───────┬────────┘
         ↓
 ┌────────────────┐
@@ -30,44 +30,44 @@ The content of a repository is laid out in a [Merkle Search Tree (MST)](https://
 └────────────────┘
 </code></pre>
 
-Every node is an [IPLD](https://ipld.io/) object ([dag-cbor](https://ipld.io/docs/codecs/known/dag-cbor/)) which is referenced by a [CID](https://github.com/multiformats/cid) hash. The arrows in the diagram above represent a CID reference.
+各ノードは[CID](https://github.com/multiformats/cid)ハッシュによって参照される[IPLD](https://ipld.io/)オブジェクト（[dag-cbor](https://ipld.io/docs/codecs/known/dag-cbor/)）です。上記の図での矢印はCIDの参照を表しています。
 
-This layout is reflected in the [AT URIs](/specs/at-uri-scheme):
+このレイアウトは[AT URIs](/specs/at-uri-scheme)に反映されています：
 
 <pre><code>Root       | at://alice.com
 Collection | at://alice.com/app.bsky.feed.post
 Record     | at://alice.com/app.bsky.feed.post/1234
 </code></pre>
 
-A “commit” to a data repository is simply a keypair signature over a Root node’s CID. Each mutation to the repository produces a new Commit node.
+データリポジトリへの「コミット」は単にRootノードのCIDに対するキーペア署名です。リポジトリへの各変更は新しいCommitノードを生成します。
 
-## Identifier Types
+## 識別子の種類
 
-Multiple types of identifiers are used within a Personal Data Repository.
+パーソナルデータリポジトリ内で複数の種類の識別子が使用されています。
 
 <table>
   <tr>
-   <td><strong>DIDs</strong>
+   <td><strong>DID</strong>
    </td>
-   <td><a href="https://w3c.github.io/did-core/">Decentralized IDs (DIDs)</a> identify data repositories. They are broadly used as user IDs, but since every user has one data repository then a DID can be considered a reference to a data repository. The format of a DID varies by the “DID method” used but all DIDs ultimately resolve to a keypair and a list of service providers. This keypair can sign commits to the data repository.
-   </td>
-  </tr>
-  <tr>
-   <td><strong>CIDs</strong>
-   </td>
-   <td><a href="https://github.com/multiformats/cid">Content IDs (CIDs)</a> identify content using a fingerprint hash. They are used throughout the repository to reference the objects (nodes) within it. When a node in the repository changes, its CID also changes. Parents which reference the node must then update their reference, which in turn changes the parent’s CID as well. This chains all the way to the Commit node, which is then signed.
+   <td><a href="https://w3c.github.io/did-core/">分散型識別子（DID）</a>はデータリポジトリを識別します。これは広くユーザーIDとして使用されますが、各ユーザーが1つのデータリポジトリを持つため、DIDはデータリポジトリへの参照と見なすことができます。使用される「DIDメソッド」によってDIDの形式は異なりますが、すべてのDIDは最終的にキーペアとサービスプロバイダのリストに解決されます。このキーペアはデータリポジトリへのコミットに署名できます。
    </td>
   </tr>
   <tr>
-   <td><strong>NSIDs</strong>
+   <td><strong>CID</strong>
    </td>
-   <td><a href="/specs/nsid">Namespaced Identifiers (NSIDs)</a> identify the Lexicon type for groups of records within a repository.
+   <td><a href="https://github.com/multiformats/cid">コンテンツID（CID）</a>はフィンガープリントハッシュを使用してコンテンツを識別します。これはリポジトリ全体でオブジェクト（ノード）を参照するために使用されます。リポジトリ内のノードが変更されると、そのCIDも変更されます。ノードを参照する親はその参照を更新し、これが親のCIDも変更することになります。これは最終的にCommitノードに連鎖し、それが署名されます。
+   </td>
+  </tr>
+  <tr>
+   <td><strong>NSID</strong>
+   </td>
+   <td><a href="/specs/nsid">ネームスペース識別子（NSID）</a>はリポジトリ内のレコードのグループのためのLexiconタイプを識別します。
    </td>
   </tr>
   <tr>
    <td><strong>rkey</strong>
    </td>
-   <td><a href="/specs/record-key">Record Keys</a> ("rkeys") identify individual records within a collection in a given repository. The format is specified by the collection Lexicon, with some collections having only a single record with a key like "self", and other collections having many records, with keys using a base32-encoded timestamp called a Timestamp Identifier (TID).
+   <td><a href="/specs/record-key">レコードキー</a>（"rkeys"）は指定されたリポジトリ内のコレクション内の個々のレコードを識別します。フォーマットはコレクションLexiconによって指定され、一部のコレクションは "self" のようなキーを持つ単一のレコードのみを持ち、他のコレクションはタイムスタンプ識別子（TID）と呼ばれるbase32エンコードされたタイムスタンプを使用したキーを持っています。
    </td>
   </tr>
 </table>

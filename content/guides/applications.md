@@ -1,39 +1,39 @@
 ---
-title: Applications model
-summary: How applications work on the AT Protocol.
+title: アプリケーションモデル
+summary: ATプロトコル上でアプリケーションが動作する仕組み
 tldr:
-  - Apps sign into the user's PDS to access their account
-  - Apps can directly read and write repo records
-  - Most interactions occur through higher-level lexicons
+  - アプリはユーザーのPDSにサインインしてアカウントにアクセスする
+  - アプリは直接レポのレコードを読み書きできる
+  - ほとんどの対話は高レベルのレキシコンを介して行われる
 ---
 
-# Applications model
+# アプリケーションモデル
 
-Applications on the AT Protocol connect to the user's Personal Data Server (PDS) to access their account. Once a session is established, the app can use the [lexicons](./lexicon) implemented by the PDS to drive behaviors.
+ATプロトコル上のアプリケーションは、ユーザーの個人データサーバー（PDS）に接続してアカウントにアクセスします。セッションが確立されると、アプリはPDSによって実装された[レキシコン](/lexicon)を使用して動作を制御できます。
 
-In this guide, we'll step through a couple of common patterns (with simple code examples) to help you develop an intuition about this. All APIs shown below are generated using Lexicon's code-generator CLI.
+このガイドでは、いくつかの一般的なパターン（簡単なコード例付き）を進めて、これについて直感を身につけるのに役立ちます。以下に示すすべてのAPIは、Lexiconのコード生成CLIを使用して生成されています。
 
-## Signing in
+## サインイン
 
-Sign-in and authentication is a simple session-oriented process. The [com.atproto.server lexicon](/lexicons/com-atproto) includes APIs for creating and managing these sessions.
+サインインと認証はシンプルなセッション指向のプロセスです。[com.atproto.server lexicon](/lexicons/com-atproto)には、これらのセッションを作成および管理するためのAPIが含まれています。
 
 ```typescript
-// create an API instance with my PDS
+// 自分のPDSでAPIインスタンスを作成
 const api = AtpApi.service('my-pds.com')
 
-// sign in using my identifier and password
+// 識別子とパスワードを使用してサインイン
 const res = await api.com.atproto.server.createSession({
   identifier: 'alice.host.com',
   password: 'hunter2'
 })
 
-// configure future calls to include the token in the Authorization header
+// 将来の呼び出しにトークンを含めるように設定
 api.setHeader('Authorization', `Bearer ${res.data.accessJwt}`)
 ```
 
-## Repo CRUD
+## レポ CRUD
 
-Every user has a public data repository. The application can do basic CRUD on records using the API.
+すべてのユーザーにはパブリックデータリポジトリがあります。アプリケーションはAPIを使用してレコードに対して基本的なCRUD操作を行うことができます。
 
 ```typescript
 await api.com.atproto.repo.listRecords({
@@ -67,17 +67,17 @@ await api.com.atproto.repo.deleteRecord({
 })
 ```
 
-You may notice that the repo above is identified by a domain name `alice.com`. Take a look at the [Identity guide](./identity) to learn more about that.
+上記のレポはドメイン名`alice.com`で識別されていることに気付くかもしれません。詳細については[Identity guide](/identity)を参照してください。
 
-## Record types
+## レコードタイプ
 
-If you're noticing the "type" field and wondering how that works, see the [Intro to Lexicon guide](./lexicon). Here is a short list of types that are currently used by the ATP software.
+"タイプ"フィールドに注目している場合、それがどのように動作するかについては[Intro to Lexicon guide](/lexicon)を参照してください。以下はATPソフトウェアで現在使用されているいくつかのタイプの簡単なリストです。
 
-You'll notice "cids" in some of the schemas. A "cid" is a "Content ID," a sha256 hash of some referenced content. These are used to ensure integrity; for instance, a like includes the cid of the post being liked so that a future edit can be detected and noted in the UI.
+いくつかのスキーマで "cids" が使用されていることに気付くかもしれません。 "cid"は "Content ID" の略で、参照されたコンテンツのsha256ハッシュです。これらは整合性を確保するために使用されます。たとえば、いいねにはいいね対象の投稿のcidが含まれており、将来の編集が検出され、UIに表示されます。
 
 ### <a href="/lexicons/app-bsky">app.bsky.graph.follow</a>
 
-A social follow. Example:
+ソーシャルフォロー。例:
 
 ```typescript
 {
@@ -89,7 +89,7 @@ A social follow. Example:
 
 ### <a href="/lexicons/app-bsky">app.bsky.feed.like</a>
 
-A like on a piece of content. Example:
+コンテンツのいいね。例:
 
 ```typescript
 {
@@ -104,7 +104,7 @@ A like on a piece of content. Example:
 
 ### <a href="/lexicons/app-bsky">app.bsky.feed.post</a>
 
-A microblog post. Example:
+マイクロブログの投稿。例:
 
 ```typescript
 {
@@ -116,7 +116,7 @@ A microblog post. Example:
 
 ### <a href="/lexicons/app-bsky">app.bsky.actor.profile</a>
 
-A user profile. Example:
+ユーザープロファイル。例:
 
 ```typescript
 {
@@ -126,9 +126,9 @@ A user profile. Example:
 }
 ```
 
-### <a href="/lexicons/app-bsky">app.bsky.feed.repost</a>
+### <a href="https://atproto.com/lexicons/app-bsky">app.bsky.feed.repost</a>
 
-A repost of an existing microblog post (similar to retweets). Example:
+既存のマイクロブログ投稿のリポスト（リツイートに類似）。例:
 
 ```typescript
 {
@@ -141,9 +141,9 @@ A repost of an existing microblog post (similar to retweets). Example:
 }
 ```
 
-## Social APIs
+## ソーシャルAPI
 
-While there's a lot that can be done by repo CRUD and other low-level `com.atproto.*` APIs, the `app.bsky.*` lexicon provides more powerful and easy-to-use APIs for social applications.
+レポCRUDや他の低レベルの`com.atproto.*` APIでできることはたくさんありますが、`app.bsky.*`レキシコンはソーシャルアプリケーションに対してより強力で使いやすいAPIを提供しています。
 
 ```typescript
 await api.app.bsky.feed.getTimeline()

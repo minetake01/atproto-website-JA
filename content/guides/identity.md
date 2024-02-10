@@ -1,40 +1,40 @@
 ---
-title: Identity
-summary: How the AT Protocol handles user identity.
+title: アイデンティティ
+summary: ATプロトコルがユーザーのアイデンティティをどのように扱うか
 tldr:
-  - Every user has a domain name handle like alice.host.com or just alice.com
-  - Every user also has a persistent "DID" which enables migration between hosts
-  - The DID maps to users' keys and current host addresses
+  - 各ユーザーはalice.host.comや単にalice.comのようなドメイン名のハンドルを持っています
+  - 各ユーザーはマイグレーションを可能にする永続的な「DID」も持っています
+  - DIDはユーザーのキーと現在のホストアドレスにマップされます
 ---
 
-# Identity
+# アイデンティティ
 
-The atproto identity system has a number of requirements:
+atprotoのアイデンティティシステムにはいくつかの要件があります：
 
-* **ID provision.** Users should be able to create global IDs which are stable across services. These IDs should rarely change to ensure that links to their content are stable.
-* **Public key distribution.** Distributed systems rely on cryptography to prove the authenticity of data and provide end-to-end privacy. The identity system must publish their public keys with strong security.
-* **Key rotation.** Users must be able to rotate their key material without disrupting their identity.
-* **Service discovery.** To interact with users, applications must be able to discover the services in use by a given user.
-* **Usability.** Users should have human-readable and memorable names.
-* **Portability.** Identities should be portable across services. Changing a provider should not cause a user to lose their identity, social graph, or content.
+* **IDの提供.** ユーザーはサービスを横断して安定したグローバルIDを作成できるようにする必要があります。これらのIDは安定したコンテンツへのリンクを確保するために滅多に変更されません。
+* **公開鍵の配布.** 分散システムではデータの真正性を証明し、エンドツーエンドのプライバシーを提供するために暗号技術が必要です。アイデンティティシステムは強力なセキュリティで公開鍵を公開する必要があります。
+* **鍵の回転.** ユーザーはアイデンティティを妨げることなくキーマテリアルを回転させることができる必要があります。
+* **サービスの検出.** アプリケーションはユーザーが使用するサービスを検出できる必要があります。
+* **使いやすさ.** ユーザーは人間が読みやすく覚えやすい名前を持っているべきです。
+* **移植性.** アイデンティティはサービスを横断して移植できる必要があります。プロバイダを変更してもユーザーがアイデンティティ、ソーシャルグラフ、またはコンテンツを失わないようにする必要があります。
 
-Adopting this system should give applications the tools for end-to-end encryption, signed user data, service sign in, and general interoperation.
+このシステムの採用により、アプリケーションにはエンドツーエンドの暗号化、署名付きユーザーデータ、サービスへのサインイン、および一般的な相互運用のツールが提供されるはずです。
 
-## Identifiers
+## 識別子
 
-We use two interrelated forms of identifiers: the _handle_ and the _DID_. Handles are DNS names while DIDs are an [emerging W3C standard](https://www.w3.org/TR/did-core/) which act as secure & stable IDs.
+私たちは2つの相互関連する識別子の形式を使用しています：_ハンドル_と_DID_。ハンドルはDNS名で、DIDは[新興のW3C標準](https://www.w3.org/TR/did-core/)で、安全で安定したIDとして機能します。
 
-The following are all valid user identifiers:
+以下はすべて有効なユーザー識別子です：
 
 <pre><code>alice.host.com
 at://alice.host.com
 at://did:plc:bv6ggog3tya2z3vxsub7hnal
 </code></pre>
 
-The relationship between them can be visualized as:
+それらの関係は次のように視覚化できます：
 
 <pre style="line-height: 1.2;"><code>┌──────────────────┐                 ┌───────────────┐
-│ DNS name         ├──resolves to──→ │ DID           │
+│ DNS名             ├──resolves to──→ │ DID           │
 │ (alice.host.com) │                 │ (did:plc:...) │
 └──────────────────┘                 └─────┬─────────┘
        ↑                                   │
@@ -47,56 +47,56 @@ The relationship between them can be visualized as:
                                     └───────────────┘
 </code></pre>
 
-The DNS handle is a user-facing identifier — it should be shown in UIs and promoted as a way to find users. Applications resolve handles to DIDs and then use the DID as the stable canonical identifier. The DID can then be securely resolved to a DID document which includes public keys and user services.
+DNSハンドルはユーザー向けの識別子であり、UIに表示され、ユーザーを見つける方法として推奨されるべきです。アプリケーションはハンドルをDIDに解決し、その後DIDを安定した正規の識別子として使用します。そのDIDは安全にDIDドキュメントに解決され、公開鍵とユーザーサービスが含まれます。
 
 <table>
   <tr>
-   <td><strong>Handles</strong>
+   <td><strong>ハンドル</strong>
    </td>
-   <td>Handles are DNS names. They are resolved using the <a href="/lexicons/com-atproto">com.atproto.identity.resolveHandle()</a> XRPC method and should be confirmed by a matching entry in the DID document. Details in the <a href="/specs/handle">Handle specification</a>.
-   </td>
-  </tr>
-  <tr>
-   <td><strong>DIDs</strong>
-   </td>
-   <td>DIDs are an emerging <a href="https://www.w3.org/TR/did-core/">W3C standard</a> for providing stable & secure IDs. They are used as stable, canonical IDs of users. Details of how they are used in AT Protocol in the <a href="/specs/did">DID specification</a>.
+   <td>ハンドルはDNS名です。[com.atproto.identity.resolveHandle()](/lexicons/com-atproto) XRPCメソッドを使用して解決され、DIDドキュメントの一致するエントリで確認される必要があります。[ハンドルの仕様](/specs/handle)で詳細があります。
    </td>
   </tr>
   <tr>
-   <td><strong>DID Documents</strong>
+   <td><strong>DID</strong>
+   </td>
+   <td>DIDは[新興のW3C標準](https://www.w3.org/TR/did-core/)で、安定した＆安全なIDを提供するためのものです。これらはユーザーの安定した正規IDとして使用されます。ATプロトコルでの使用方法の詳細は[DIDの仕様](/specs/did)にあります。
+   </td>
+  </tr>
+  <tr>
+   <td><strong>DIDドキュメント</strong>
    </td>
    <td>
-    DID Documents are standardized objects which are hosted by DID registries. They include the following information:
+    DIDドキュメントはDIDレジストリによってホストされる標準化されたオブジェクトです。以下の情報が含まれています：
     <ul>
-      <li>The handle associated with the DID.</li>
-      <li>The signing key.</li>
-      <li>The URL of the user’s PDS.</li>
+      <li>DIDに関連するハンドル。</li>
+      <li>署名鍵。</li>
+      <li>ユーザーのPDSのURL。</li>
     </ul>
    </td>
   </tr>
 </table>
 
-## DID Methods
+## DIDメソッド
 
-The [DID standard](https://www.w3.org/TR/did-core/) supports custom "methods" of publishing and resolving DIDs to the [DID Document](https://www.w3.org/TR/did-core/#core-properties). A variety of existing methods [have been published](https://w3c.github.io/did-spec-registries/#did-methods) so we must establish criteria for inclusion in this proposal:
+[DID標準](https://www.w3.org/TR/did-core/)はDIDを[DIDドキュメント](https://www.w3.org/TR/did-core/#core-properties)に公開し、解決するためのカスタム「メソッド」をサポートしています。既存のさまざまなメソッドが[公開されています](https://w3c.github.io/did-spec-registries/#did-methods)ので、この提案への含まれるための基準を確立する必要があります：
 
-- **Strong consistency.** For a given DID, a resolution query should produce only one valid document at any time. (In some networks, this may be subject to probabilistic transaction finality.)
-- **High availability**. Resolution queries must succeed reliably.
-- **Online API**. Clients must be able to publish new DID documents through a standard API.
-- **Secure**. The network must protect against attacks from its operators, a MITM, and other users.
-- **Low cost**. Creating and updating DID documents must be affordable to services and users.
-- **Key rotation**. Users must be able to rotate keypairs without losing their identity.
-- **Decentralized governance**. The network should not be governed by a single stakeholder; it must be an open network or a consortium of providers.
+- **強力な一貫性.** 特定のDIDに対して解決クエリは常に一度に1つの有効なドキュメントを生成する必要があります（一部のネットワークでは確率論的トランザクションの確定の対象となる場合があります）。
+- **高可用性.** 解決クエリは確実に成功する必要があります。
+- **オンラインAPI.** クライアントは標準のAPIを介して新しいDIDドキュメントを公開できる必要があります。
+- **セキュア.** ネットワークはそのオペレータ、MITM、および他のユーザーからの攻撃に対して保護する必要があります。
+- **低コスト.** DIDドキュメントの作成および更新はサービスとユーザーに手頃である必要があります。
+- **鍵の回転.** ユーザーはアイデンティティを失うことなくキーペアを回転させることができる必要があります。
+- **分散ガバナンス.** ネットワークは単一の利害関係者によって統治されていてはならず、オープンネットワークまたはプロバイダのコンソーシアムである必要があります。
 
-At present, none of the DID methods meet our standards fully. **Therefore, we have chosen to support [did-web](https://w3c-ccg.github.io/did-method-web/) and a temporary method we've created called [DID Placeholder](https://github.com/bluesky-social/did-method-plc).** We expect this situation to evolve as new solutions emerge.
+現在、いずれのDIDメソッドも完全に私たちの基準を満たしていません。**したがって、私たちは[did-web](https://w3c-ccg.github.io/did-method-web/)と[一時的なメソッドDID Placeholder](https://github.com/bluesky-social/did-method-plc)をサポートすることにしました。** この状況は新しい解決策が現れるにつれて進化すると期待されています。
 
-## Handle Resolution
+## ハンドルの解決
 
-Handles in atproto are domain names which resolve to a DID, which in turn resolves to a DID Document containing the user's signing pubkey and hosting service.
+atprotoでのハンドルはDIDに解決され、ユーザーの署名公開鍵とホスティングサービスを含むDIDドキュメントに解決されるドメイン名です。
 
-Handle resolution uses the [`com.atproto.identity.resolveHandle`](/lexicons/com-atproto) XRPC method. The method call should be sent to the server identified by the handle, and the handle should be passed as a parameter.
+ハンドルの解決には[`com.atproto.identity.resolveHandle`](/lexicons/com-atproto) XRPCメソッドが使用されます。メソッド呼び出しはハンドルによって識別されるサーバに送信され、ハンドルはパラメータとして渡されるべきです。
 
-Here is the algorithm in pseudo-TypeScript:
+以下は擬似TypeScriptでのアルゴリズムです：
 
 ```typescript
 async function resolveHandle(handle: string) {
@@ -107,21 +107,21 @@ async function resolveHandle(handle: string) {
 }
 ```
 
-### Example: Hosting service
+### 例: ホスティングサービス
 
-Consider a scenario where a hosting service is using PLC and is providing the handle for the user as a subdomain:
+ホスティングサービスがPLCを使用しており、ユーザーのハンドルをサブドメインとして提供しているシナリオを考えてみましょう：
 
-- The handle: `alice.pds.com`
-- The DID: `did:plc:12345`
-- The hosting service: `https://pds.com`
+- ハンドル： `alice.pds.com`
+- DID： `did:plc:12345`
+- ホスティングサービス： `https://pds.com`
 
-At first, all we know is `alice.pds.com`, so we call `com.atproto.identity.resolveHandle()` on `alice.pds.com`. This tells us the DID.
+最初は`alice.pds.com`しかわかりませんので、`com.atproto.identity.resolveHandle()`を`alice.pds.com`で呼び出します。これによりDIDがわかります。
 
 ```typescript
 await xrpc.service('https://alice.pds.com').com.atproto.identity.resolveHandle() // => {did: 'did:plc:12345'}
 ```
 
-Next we call the PLC resolution method on the returned DID so that we can learn the hosting service's endpoint and the user's key material.
+次に、返されたDIDに対してPLC解決メソッドを呼び出して、ホスティングサービスのエンドポイントとユーザーのキーマテリアルを学びます。
 
 ```typescript
 await didPlc.resolve('did:plc:12345') /* => {
@@ -132,23 +132,25 @@ await didPlc.resolve('did:plc:12345') /* => {
 }*/
 ```
 
-We can now communicate with `https://pds.com` to access Alice's data.
+これで`https://pds.com`と通信してAliceのデータにアクセスできます。
 
-### Example: Hosting service with separate domain name
+### 例: 別のドメイン名を持つホスティングサービス
 
-Suppose we have the same scenario as before, except the user has supplied their own domain name:
+前述のシナリオと同じであると仮定しましょうが、ユーザーが独自のドメイン名を提供しているとします：
 
-- The handle: `alice.com` (this differs from before)
-- The DID: `did:plc:12345`
-- The hosting service: `https://pds.com`
+- ハンドル： `alice.com`（これは前
 
-We call `com.atproto.identity.resolveHandle()` on `alice.com` to get the DID.
+と異なります）
+- DID： `did:plc:12345`
+- ホスティングサービス： `https://pds.com`
+
+`alice.com`で`com.atproto.identity.resolveHandle()`を呼び出してDIDを取得します。
 
 ```typescript
 await xrpc.service('https://alice.com').com.atproto.identity.resolveHandle() // => {did: 'did:plc:12345'}
 ```
 
-Then we resolve the DID as before:
+次に、前と同様にDIDを解決します：
 
 ```typescript
 await didPlc.resolve('did:plc:12345') /* => {
@@ -159,29 +161,29 @@ await didPlc.resolve('did:plc:12345') /* => {
 }*/
 ```
 
-We can now communicate with `https://pds.com` to access Alice's data. The `https://alice.com` endpoint only serves to handle the `com.atproto.identity.resolveHandle()` call. The actual user data lives on `pds.com`.
+これで`https://pds.com`と通信してAliceのデータにアクセスできます。`https://alice.com`のエンドポイントは、`com.atproto.identity.resolveHandle()`の呼び出しを処理するためだけに使われます。実際のユーザーデータは`pds.com`にあります。
 
-### Example: Self-hosted
+### 例: セルフホスティング
 
-Let's consider a self-hosting scenario. If it's using `did:plc`, it would look something like:
+セルフホスティングのシナリオを考えてみましょう。それが`did:plc`を使用している場合、次のようになります：
 
-- The handle: `alice.com`
-- The DID: `did:plc:12345`
-- The hosting service: `https://alice.com`
+- ハンドル： `alice.com`
+- DID： `did:plc:12345`
+- ホスティングサービス： `https://alice.com`
 
-However, **if the self-hoster is confident they will retain ownership of the domain name**, they can use `did:web` instead of `did:plc`:
+ただし、**セルフホストがドメイン名の所有権を確実に保持すると信じている場合**、`did:plc`の代わりに`did:web`を使用できます：
 
-- The handle: `alice.com`
-- The DID: `did:web:alice.com`
-- The hosting service: `https://alice.com`
+- ハンドル： `alice.com`
+- DID： `did:web:alice.com`
+- ホスティングサービス： `https://alice.com`
 
-We call `com.atproto.identity.resolveHandle()` on `alice.com` to get the DID.
+`alice.com`で`com.atproto.identity.resolveHandle()`を呼び出してDIDを取得します。
 
 ```typescript
 await xrpc.service('https://alice.com').com.atproto.identity.resolveHandle() // => {did: 'did:web:alice.com'}
 ```
 
-We then resolve using `did:web`:
+その後、`did:web`を使用して解決します：
 
 ```typescript
 await didWeb.resolve('did:web:alice.com') /* => {

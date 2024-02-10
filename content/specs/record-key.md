@@ -1,69 +1,69 @@
 ---
-title: Record Key
-summary: Identifier for individual records in a collection
+title: レコードキー
+summary: コレクション内の個々のレコードを識別するための識別子
 ---
 
-# Record Keys
+# レコードキー
 
-A **Record Key** (sometimes shortened to `rkey`) is used to name and reference an individual record within the same collection of an atproto repository. It ends up as a segment in AT URIs, and in the repo MST path.
+**レコードキー**（時折 `rkey` と略される）は、atprotoリポジトリ内の同じコレクション内の個々のレコードを命名および参照するために使用されます。これはAT URIのセグメントとして終わり、リポジトリMSTパスにもなります。
 
-A few different Record Key naming schemes are supported. Every record Lexicon schema will indicate which of the record key types should be used, depending on the needs and semantics of the record collection.
-
-
-### Record Key Type: `tid`
-
-This is the most common record naming scheme. `TID` is short for "timestamp identifier," and the name is derived from the creation time of the record.
-
-The characteristics of a TID are:
-
-- 64-bit integer
-- big-endian byte ordering
-- encoded as `base32-sortable`. That is, encoded with characters `234567abcdefghijklmnopqrstuvwxyz`, with no padding, yielding 13 ASCII characters.
-- hyphens should not be included in a TID (unlike in previous iterations of the scheme)
-
-The layout of the 64-bit integer is:
-
-- The top bit is always 0
-- The next 53 bits represent microseconds since the UNIX epoch. 53 bits is chosen as the maximum safe integer precision in a 64-bit floating point number, as used by Javascript.
-- The final 10 bits are a random "clock identifier."
-
-TID generators should generate a random clock identifier number, chosen to avoid collisions as much as possible (for example, between multiple worker instances of a PDS service cluster). A local clock can be used to generate the timestamp itself. Care should be taken to ensure the TID output stream is monotonically increasing and never repeats, even if multiple TIDs are generated in the same microsecond, or during "clock smear" or clock synchronization incidents. If the local clock has only millisecond precision, the timestamp should be padded. (You can do this by multiplying by 1000.)
-
-The primary motivation for the TID scheme is to provide a loose temporal ordering of records, which improves storage efficiency of the repository data structure (MST).
-
- Note: There are similarities to ["snowflake identifiers"](https://en.wikipedia.org/wiki/Snowflake_ID). In the decentralized context of atproto, the global uniqueness of TIDs can not be guaranteed, and an antagonistic repo controller could trivially create records re-using known TIDs.
+いくつか異なるレコードキーの命名スキームがサポートされています。すべてのレコードLexiconスキーマは、レコードコレクションのニーズとセマンティクスに応じてどのレコードキータイプを使用するかを示します。
 
 
-### Record Key Type: `literal:<value>`
+### レコードキータイプ: `tid`
 
-This key type is used when there should be only a single record in the collection, with a fixed, well-known Record Key.
+これは最も一般的なレコード命名スキームです。`TID` は「タイムスタンプ識別子」の略であり、名前はレコードの作成時刻から派生しています。
 
-The most common value is `self`, specified as `literal:self` in a Lexicon schema.
+TIDの特徴は次のとおりです：
 
+- 64ビット整数
+- ビッグエンディアンバイトオーダリング
+- `base32-sortable` としてエンコードされます。これは、文字 `234567abcdefghijklmnopqrstuvwxyz` でエンコードされ、パディングなしで13文字のASCII文字を生成します。
+- ハイフンはTIDに含めてはいけません（以前のスキームのように）
 
-### Record Key Type: `any`
+64ビット整数のレイアウトは次のとおりです：
 
-Any string meeting the overall Record Key schema requirements (see below) is allowed. This is the most flexible type of Record Key.
+- 上位ビットは常に0
+- 次の53ビットはUNIXエポックからのマイクロ秒を表します。53ビットは、JavaScriptで使用される64ビット浮動小数点数の最大安全整数精度として選択されています。
+- 最後の10ビットはランダムな「クロック識別子」です。
 
-This may be used to encode semantics in the name, for example, a domain name, integer, or (transformed) AT URI. This enables de-duplication and known-URI lookups.
+TIDジェネレータはランダムなクロック識別子番号を生成する必要があります。これはできるだけ衝突を回避するように選択されます（たとえば、PDSサービスクラスタの複数のワーカーインスタンス間で）。ローカルクロックはタイムスタンプ自体を生成するために使用できます。TID出力ストリームが単調に増加し、同じマイクロ秒に複数のTIDが生成された場合や「クロックスミア」またはクロック同期のインシデント中にも二重にならないようにするために注意が必要です。ローカルクロックがミリ秒の精度しかない場合は、タイムスタンプをパディングする必要があります（これは1000倍することで行えます）。
 
+TIDスキームの主な動機は、レコードの緩やかな時系列の順序付けを提供し、リポジトリデータ構造（MST）のストレージ効率を向上させることです。
 
-### Record Key Syntax
-
-Regardless of the type, Record Keys must fulfill some baseline syntax constraints:
-
-- restricted to a subset of ASCII characters — the allowed characters are alphanumeric (`A-Za-z0-9`), period, dash, underscore, or tilde (`.-_~`)
-- must have at least 1 and at most 512 characters
-- the specific record key values `.` and `..` are not allowed
-- must be a permissible part of repository MST path string (the above constraints satisfy this condition)
-- must be permissible to include in a path component of a URI (following RFC-3986, section 3.3).  The above constraints satisfy this condition, by matching the "unreserved" characters allowed in generic URI paths.
-
-Record Keys are case-sensitive.
+注意: ["スノーフレーク識別子"](https://en.wikipedia.org/wiki/Snowflake_ID) との類似点があります。atprotoの分散コンテキストでは、TIDのグローバルな一意性は保証できず、敵対的なリポジトリコントローラーは既知のTIDを再利用してレコードを簡単に作成できます。
 
 
-### Examples
+### レコードキータイプ: `literal:<value>`
 
-Valid Record Keys:
+このキータイプは、コレクション内に単一のレコードしかない場合に使用されます。固定された、よく知られたレコードキーが存在します。
+
+最も一般的な値は `self` であり、Lexiconスキーマでは `literal:self` として指定されます。
+
+
+### レコードキータイプ: `any`
+
+全般的なレコードキーのスキーマ要件（以下参照）を満たす任意の文字列が許可されています。これは最も柔軟なレコードキータイプです。
+
+これを使用して名前にセマンティクスをエンコードすることができます。たとえば、ドメイン名、整数、または（変換された）AT URIなど。これにより、重複の削減と既知のURIの検索が可能になります。
+
+
+### レコードキーシンタックス
+
+タイプに関係なく、レコードキーはいくつかの基本的な構文制約を満たす必要があります：
+
+- ASCII文字のサブセットに制限されています。許可されている文字は英数字（`A-Za-z0-9`）、ピリオド、ダッシュ、アンダースコア、またはチルダ（`.-_~`）です。
+- 少なくとも1文字、最大512文字である必要があります。
+- 特定のレコードキーの値 `. `および `..` は許可されていません。
+- リポジトリMSTパス文字列の許容可能な部分である必要があります（上記の制約でこの条件を満たしています）。
+- URIのパスコンポーネントに含めることができる必要があります（RFC-3986、セクション3.3に従う）。上記の制約は、一般的なURIパスで許可されている「未予約」の文字に一致しています。
+
+レコードキーは大文字と小文字を区別します。
+
+
+### 例
+
+有効なレコードキー：
 
 ```
 3jui7kd54zh2y
@@ -73,7 +73,7 @@ example.com
 dHJ1ZQ
 ```
 
-Invalid Record Keys:
+無効なレコードキー：
 
 ```
 literal:self
@@ -91,28 +91,29 @@ pre:fix
 dHJ1ZQ==
 ```
 
-### Usage and Implementation Guidelines
+### 使用および実装ガイドライン
 
-Implementations should not rely on global uniqueness of TIDs, and should not trust TID timestamps as actual record creation timestamps. Record Keys are "user-controlled data" and may be arbitrarily selected by hostile accounts.
+実装はTIDのグローバルな一意性に依存すべきではなく、TIDタイムスタンプを実際のレコード作成タイムスタンプとして信頼すべきではありません。レコードキーは「ユーザー制御のデータ」であり、敵対的なアカウントによって任意に選択される可能性があります。
 
-Most software processing repositories and records should be agnostic to the Record Key type and values, and usually treat them as simple strings. For example, relying on TID keys to decode as `base32` into a unique `uint64` makes it tempting to rely on this for use as a database key, but doing so is not resilient to key format changes and is discouraged.
+ほとんどのリポジトリとレコードを処理するソフトウェアは、通常、レコードキータイプと値に対して無知であり、通常はそれらを単純な文字列として扱います。たとえば、TIDキーが`base32`にデコードされてユニークな`uint64`に変換されることを期待していると、これをデータベースキーとして使用することは鍵フォーマットの変更に強くなく、推奨されません。
 
-Note that in the context of a repository, the same Record Key value may be used under multiple collections. The tuple of `(did, rkey)` is not unique; the tuple `(did, collection, rkey)` is unique.
+リポジトリのコンテキストでは、同じレコードキーの値が複数のコレクションで使用される可能性があります。タプル `(did, rkey)` は一意ではなく、タプル `(did, collection, rkey)` が一意です。
 
-As a best practice, keep key paths to under 80 characters in virtually all situations.
+ベストプラクティスとして、ほとんどの状況でキーパスを80文字未満に保つことが重要です。
 
-Note that the colon character (`:`) is not currently allowed, which means than DIDs can not be included in a Record Key without character transformations.
+コロン文字（`:`）は現在許可されていないことに注意してください。これはDIDをキーに含めることができないことを意味します。文字の変換なしに。
 
-While Record Keys are case-sensitive, it is a recommended practice to use all-lower-case Record Keys to avoid confusion and maximize possible re-use in case-insensitive contexts.
+レコードキーは大文字と小文字を区別しますが、混乱を避け、大文字小文字を区別しないコンテキストでの再利用を最大化するためにすべて小文字のレコードキーを使用することを推奨します。
 
-### Possible Future Changes
 
-The constraints on Record Key syntax may be relaxed in the future to allow non-ASCII Unicode characters. Record keys will always be valid Unicode, never relaxed to allow arbitrary byte-strings.
+### 可能性のある将来の変更
 
-Additional Record Key types may be defined.
+将来的には、レコードキー構文の制約が緩和され、非ASCII Unicode文字を許可するかもしれません。レコードキーは常に有効なUnicodeであり、任意のバイトストリングを許可することはありません。
 
-The maximum length may be tweaked.
+追加のレコードキータイプが定義されるかもしれません。
 
-The `%` character is reserved for possible use with URL encoding, but note that such encoding is not currently supported.
+最大長さは微調整されるかもしれません。
 
-Additional constraints on the generic syntax may be added. For example, requiring at least one alphanumeric character.
+`%`文字はURLエンコードに使用する可能性がありますが、現在そのようなエンコードはサポートされていません。
+
+一般的な構文に関する追加の制約が追加される可能性があります。たとえば、少なくとも1つの英数字が必要など。

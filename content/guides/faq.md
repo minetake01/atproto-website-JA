@@ -1,39 +1,39 @@
 ---
-title: FAQ
-summary: Frequently Asked Questions about ATP
+title: よくある質問（FAQ）
+summary: 認証済み転送プロトコル（ATP）に関するよくある質問
 ---
 
-# FAQ
+# よくある質問（FAQ）
 
-Frequently Asked Questions about the Authenticated Transfer Protocol (ATP). For FAQ about Bluesky, visit [here](https://blueskyweb.xyz/faq).
+認証済み転送プロトコル（ATP）に関するよくある質問。Blueskyに関するFAQは[こちら](https://blueskyweb.xyz/faq)を参照してください。
 
-## Is the AT Protocol a blockchain?
+## ATプロトコルはブロックチェーンですか？
 
-No. The AT Protocol is a [federated protocol](https://en.wikipedia.org/wiki/Federation_(information_technology)). It's not a blockchain nor does it use a blockchain.
+いいえ。ATプロトコルは[連邦プロトコル](https://en.wikipedia.org/wiki/Federation_(information_technology))です。これはブロックチェーンではなく、ブロックチェーンを使用しません。
 
-## Why not use ActivityPub?
+## なぜActivityPubを使用しないのですか？
 
-[ActivityPub](https://en.wikipedia.org/wiki/ActivityPub) is a federated social networking technology popularized by [Mastodon](https://joinmastodon.org/).
+[ActivityPub](https://en.wikipedia.org/wiki/ActivityPub)は、[Mastodon](https://joinmastodon.org/)によって普及した連邦型ソーシャルネットワーキング技術です。
 
-Account portability is the major reason why we chose to build a separate protocol. We consider portability to be crucial because it protects users from sudden bans, server shutdowns, and policy disagreements. Our solution for portability requires both [signed data repositories](/guides/data-repos) and [DIDs](/guides/identity), neither of which are easy to retrofit into ActivityPub. The migration tools for ActivityPub are comparatively limited; they require the original server to provide a redirect and cannot migrate the user's previous data.
+アカウントの移植性が、われわれが独自のプロトコルを構築する理由の主な要因です。移植性は、ユーザーを急なBANやサーバーシャットダウン、ポリシーの不一致から保護するために重要だと考えています。 移植性のための当社のソリューションには、[署名付きデータリポジトリ](/guides/data-repos)と[DID（分散型識別子）](/guides/identity)の両方が必要であり、これらはActivityPubに簡単に後付けできません。 ActivityPubのための移行ツールは比較的限られており、元のサーバーがリダイレクトを提供することを要求し、ユーザーの以前のデータを移行できません。
 
-Other smaller differences include: a different viewpoint about how schemas should be handled, a preference for domain usernames over AP’s double-@ email usernames, and the goal of having large scale search and discovery (rather than the hashtag style of discovery that ActivityPub favors).
+その他の細かい違いには、スキーマの取り扱いに関する異なる視点、APの二重@メールユーザー名よりもドメインユーザー名を好むこと、そしてActivityPubが好むハッシュタグスタイルの探索ではなく、大規模な検索と発見を目指している点などがあります。
 
-## Why create Lexicon instead of using JSON-LD or RDF?
+## JSON-LDやRDFを使用せずにLexiconを作成する理由は何ですか？
 
-Atproto exchanges data and RPC commands across organizations. For the data and RPC to be useful, the software needs to correctly handle schemas created by separate teams. This is the purpose of [Lexicon](/guides/lexicon).
+Atprotoは組織間でデータとRPCコマンドを交換します。データとRPCが有用であるためには、ソフトウェアが異なるチームによって作成されたスキーマを正しく処理できる必要があります。これが[Lexicon](/guides/lexicon)の目的です。
 
-We want engineers to feel comfortable using and creating new schemas, and we want developers to enjoy the DX of the system. Lexicon helps us produce strongly typed APIs which are extremely familiar to developers and which provides a variety of runtime correctness checks (which are vital in distributed systems).
+私たちはエンジニアが新しいスキーマを使用し、作成する際に快適に感じ、開発者がシステムのDXを楽しむことを望んでいます。 Lexiconは、開発者に非常に馴染みのある強力な型付きAPIを生成し、分散システムで非常に重要な実行時の正確性チェックを提供します。
 
-[RDF](https://en.wikipedia.org/wiki/Resource_Description_Framework) is intended for extremely general cases in which the systems share very little infrastructure. It’s conceptually elegant but difficult to use, often adding a lot of syntax which devs don't understand. JSON-LD simplifies the task of consuming RDF vocabularies, but it does so by hiding the underlying concepts, not by making RDF more legible.
+[RDF](https://en.wikipedia.org/wiki/Resource_Description_Framework)は、システムが非常に少ないインフラを共有している極めて一般的なケースを想定しています。概念的には優雅ですが、理解しづらい構文をしばしば追加し、開発者が理解できないことがよくあります。 JSON-LDはRDFボキャブラリを消費するタスクを単純化しますが、それはRDFをより判読可能にするのではなく、その基本的な概念を隠しています。
 
-We looked very closely at using RDF but just didn't love the developer experience (DX) or the tooling it offered.
+私たちはRDFを使用する可能性を非常に注意深く検討しましたが、開発者の体験（DX）や提供されるツールに魅力を感じませんでした。
 
-## What is “XRPC,” and why not use ___?
+## "XRPC"とは何で、なぜ___を使用しないのですか？
 
-[XRPC](/specs/xrpc) is HTTP with some added conventions.
+[XRPC](/specs/xrpc)は、いくつかの追加の慣習を備えたHTTPです。
 
-XRPC uses [Lexicon](/guides/lexicon) to describe HTTP calls and maps them to `/xrpc/{methodId}`. For example, this API call:
+XRPCは[Lexicon](/guides/lexicon)を使用してHTTPコールを記述し、それらを`/xrpc/{methodId}`にマップします。例えば、このAPIコール：
 
 ```typescript
 await api.com.atproto.repo.listRecords({
@@ -42,7 +42,7 @@ await api.com.atproto.repo.listRecords({
 })
 ```
 
-...maps to:
+...は次のようにマップされます：
 
 ```text
 GET /xrpc/com.atproto.repo.listRecords
@@ -50,4 +50,4 @@ GET /xrpc/com.atproto.repo.listRecords
   &collection=app.bsky.feed.post
 ```
 
-Lexicon establishes a shared method id (`com.atproto.repo.listRecords`) and the expected query params, input body, and output body. By using Lexicon we get runtime checks on the inputs and outputs of the call, and can generate typed code like the API call example above.
+Lexiconは共有メソッドID (`com.atproto.repo.listRecords`) と期待されるクエリパラメータ、入力ボディ、出力ボディを確立します。Lexiconを使用することで、コールの入力と出力に対する実行時のチェックを得ることができ、上記のAPIコールのような型付きのコードを生成できます。

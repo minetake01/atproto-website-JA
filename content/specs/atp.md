@@ -1,65 +1,64 @@
 ---
-title: AT Protocol
-summary: Specification for the Authenticated Transfer Protocol (AT Protocol)
+title: ATプロトコル
+summary: 認証済み転送プロトコル（ATプロトコル）の仕様書
+
 ---
 
-# AT Protocol
+# ATプロトコル
 
-The Authenticated Transfer Protocol (AT Protocol or atproto) is a generic federated protocol for building open social media applications. Some recurring themes and features are:
+認証済み転送プロトコル（ATプロトコルまたはatproto）は、オープンソーシャルメディアアプリケーションを構築するための汎用のフェデレーテッドプロトコルです。いくつかの繰り返しテーマと特徴があります：
 
-- self-authenticating data and identity, allowing seamless account migrations and redistribution of content
-- design for "big world" use cases, scaling to billions of accounts
-- delegated authority over application-layer schemas and aggregation infrastructure
-- re-use of existing data models from the dweb protocol family and network primitives from the web platform
+- 自己認証データとアイデンティティにより、シームレスなアカウント移行とコンテンツの再配布が可能になります。
+- 「ビッグワールド」ユースケース向けのデザインで、数十億のアカウントにスケーリングします。
+- アプリケーションレイヤのスキーマと集計インフラの委任された権限
+- dwebプロトコルファミリーからの既存のデータモデルの再利用とWebプラットフォームからのネットワークプリミティブの再利用
 
-## Protocol Structure
+## プロトコル構造
 
-**Identity:** account control is rooted in stable [DID](/specs/did) identifiers, which can be rapidly resolved to determine the current service provider location and [Cryptographic keys](/specs/cryptography) associated with the account. [Handles](/specs/handle) provide a more human-recognizable and mutable identifier for accounts.
+**アイデンティティ：** アカウントコントロールは安定した[DID](/specs/did)識別子に基づいており、これはアカウントに関連する現在のサービスプロバイダの場所と[暗号キー](/specs/cryptography)を素早く解決できます。[ハンドル](/specs/handle)はアカウントのより人間に認識しやすく、変更可能な識別子を提供します。
 
-**Data:** public content is stored in content-addressed and cryptographically verifiable [Repositories](/specs/repository). Data records and network messages all conform to a unified [Data Model](/specs/data-model) ([IPLD](https://ipld.io/docs/data-model/), with [CBOR](https://en.wikipedia.org/wiki/CBOR) and JSON representations).
+**データ：** パブリックコンテンツはコンテンツアドレス指定および暗号的に検証可能な[リポジトリ](/specs/repository)に保存されます。データレコードとネットワークメッセージはすべて統一された[データモデル](/specs/data-model)（[IPLD](https://ipld.io/docs/data-model/)、[CBOR](https://en.wikipedia.org/wiki/CBOR)、およびJSON表現）に準拠しています。
 
-**Network:** HTTP client-server and server-server [APIs](/specs/xrpc) are described with Lexicons, as are WebSocket [Event Streams](/specs/event-stream). Individual records can be referenced across the network by [AT URI](/specs/at-uri-scheme). A Personal Data Server (PDS) acts as an account's trusted agent in the network, routes client network requests, and hosts repositories. A relay (previously referred to as a Big Graph Service, or BGS) crawls many repositories and outputs a unified event firehose.
+**ネットワーク：** HTTPクライアントサーバーおよびサーバーサーバー[API](/specs/xrpc)はレキシコンで説明されており、WebSocket [イベントストリーム](/specs/event-stream)も同様です。[AT URI](/specs/at-uri-scheme)によりネットワーク全体で個々のレコードを参照できます。個人データサーバー（PDS）はネットワーク上のアカウントの信頼できるエージェントとして機能し、クライアントネットワークリクエストをルーティングし、リポジトリをホストします。リレー（以前はBig Graph ServiceまたはBGSと呼ばれていました）は多くのリポジトリをクロールし、統一されたイベントファイアホースを出力します。
 
-**Application:** APIs and record schemas for applications built on atproto are specified in [Lexicons](/specs/lexicon), which are referenced by [Namespaced Identifiers](/specs/nsid) (NSIDs). Application-specific aggregations (such as search) are provided by an Application View (App View) service. Clients can include mobile apps, desktop software, or web interfaces.
+**アプリケーション：** atprotoで構築されたアプリケーションのためのAPIとレコードスキーマは[レキシコン](/specs/lexicon)で指定され、[名前空き識別子](/specs/nsid)（NSID）によって参照されます。アプリケーション固有の集計（検索など）はアプリケーションビューサービス（App View）によって提供されます。クライアントにはモバイルアプリ、デスクトップソフトウェア、またはWebインターフェースが含まれます。
 
-The AT Protocol itself does not specify common social media conventions like follows or avatars, leaving these to application-level Lexicons. The `com.atproto.*` Lexicons provide common APIs for things like account signup and login. These could be considered part of AT Protocol itself, though they can also be extended or replaced over time as needed. Bluesky is a microblogging social app built on top of AT Protocol, with lexicons under the `app.bsky.*` namespace.
+ATプロトコル自体は、フォローやアバターのような一般的なソーシャルメディアの慣習を指定していません。これらはアプリケーションレベルのレキシコンに任せています。 `com.atproto.*`レキシコンはアカウントのサインアップやログインなどの共通のAPIを提供します。これらはATプロトコル自体の一部と見なすことができますが、必要に応じて拡張または置換することもできます。BlueskyはATプロトコルの上に構築されたマイクロブログソーシャルアプリで、`app.bsky.*`ネームスペースの下にあるレキシコンを使用しています。
 
-While atproto borrows several formats and specifications from the IPFS ecosystem (such as IPLD and CID), atproto data does not need to be stored in the IPFS network, and the atproto reference implementation does not use the IPFS network at all, though it would be a reasonable technology for other atproto implementations to adopt.
+atprotoはIPFSエコシステムからいくつかのフォーマットと仕様を借りています（IPLDやCIDなど）。ただし、atprotoデータはIPFSネットワークに保存する必要はなく、atprotoのリファレンス実装はIPFSネットワークを使用していませんが、他のatproto実装が採用するのは理にかなった技術であるかもしれません。
 
+## プロトコルの拡張とアプリケーション
 
-## Protocol Extension and Applications
+ATプロトコルは、第三者アプリケーションの開発に対する柔軟性と相互運用性をバランスさせるために最初から設計されました。
 
-AT Protocol was designed from the beginning to balance stability and interoperation against flexibility for third-party application development.
+コアプロトコルの拡張メカニズムは、独立した名前空間の下で新しいレキシコンの開発です。レキシコンは新しいリポジトリレコードスキーマ（NSIDによってコレクションに格納される）、新しいHTTP APIエンドポイント、および新しいイベントストリームエンドポイントとメッセージタイプを宣言できます。また、新しいアプリケーションには新しいネットワーク集約サービス（"AppViews"）とクライアントアプリ（モバイルアプリまたはWebインターフェースなど）が必要とされることが期待されています。
 
-The core protocol extension mechanism is development of new Lexicons under independent namespaces. Lexicons can declare new repository record schemas (stored in collections by NSID), new HTTP API endpoints, and new event stream endpoints and message types. It is also expected that new applications might require new network aggregation services ("AppViews") and client apps (eg, mobile apps or web interfaces).
+第三者はレキシコンとレコードデータを名前空間全体で再利用することが期待されています。たとえば、新しいアプリケーションは`app.bsky.*`レキシコンで指定されたソーシャルグラフレコードを基に構築できますが、これは`bsky.app`権限によって制御されるスキーマに準拠している限りです。
 
-It is expected that third parties will reuse Lexicons and record data across namespaces. For example, new applications are welcome to build on top of the social graph records specified in the `app.bsky.*` Lexicons, as long as they comply with the schemas controlled by the `bsky.app` authority.
+個々のレキシコン名前空間のガバナンス構造は柔軟です。ボランティアコミュニティ、企業、コンソーシアム、学術研究者、資金提供された非営利団体などによって開発および維持される可能性があります。
 
-Governance structures for individual Lexicon namespaces are flexible. They could be developed and maintained by volunteer communities, corporations, consortia, academic researchers, funded non-profits, etc.
+## 不足しているものは何ですか？
 
-## What Is Missing?
+これらの仕様は、Blueskyのリファレンス実装で実装されている詳細のほとんどをカバーしています。ただし、そのリファレンス実装とこれらの仕様の両方でいくつかの重要な部分がまだ最終的には確定していません。
 
-These specifications cover most details as implemented in Bluesky's reference implementation. A few important pieces have not been finalized, both in that reference implementation and in these specifications.
+**アカウント移行：** アイデンティティおよびリポジトリシステムは、非協力的なサービスプロバイダの存在に影響を与えずに、アカウントをPDSサービスプロバイダ間で簡単に移行できるように設計されました。まだ詳細が確定していない部分があります：オプションのPDS-to-PDSリポジトリ転送、転送グレース期間中のダウンストリームの動作、ネットワークの乱用を防ぐためのレート制限規範、ブロブ移行など。
 
-**Account Migration:** the identity and repository systems were designed to enable easy migration of accounts between PDS service providers, even in the face of a non-cooperative service provider, without impact on the social graph. Some details have not been worked out yet: optional PDS-to-PDS repository transfer; downstream behavior during transfer grace periods; rate-limit norms to prevent network abuse; blob migration; etc.
+**リポジトリ同期：** リポジトリのコミットスキーマにはリビジョンフィールドがあり、`com.atproto.sync.*`レキシコンはこれらを`since`パラメータを介して参照してリポジトリコンテンツの部分取得を行うことができます。このメカニズムはほぼ確定していますが、詳細はまだここに指定されていません。
 
-**Repository Sync:** the repository commit schema has a revision field, and the `com.atproto.sync.*` Lexicons can reference these via a `since` parameter to do partial fetches of repository content. This mechanism is largely settled, but not yet specified here in detail.
+**リポジトリイベントストリーム：** `com.atproto.sync.subscribeRepos`サブスクリプションレキシコンはプロトコルの中核的な部分であり、詳細をさらに詳しく説明する必要があります。これには「コミット」メッセージタイプのセマンティクスが含まれ、これには新しいリポジトリブロックの「CARスライス」と操作リストが含まれます。
 
-**Repository Event Stream:** the `com.atproto.sync.subscribeRepos` subscription Lexicon is a core part of the protocol and the details need to be described in more detail. This includes the semantics of the "commit" message type, which includes both a "CAR slice" of new repository blocks, and an operation list.
+**ブロブエクスポート：** ブロブ（または画像）のエクスポートと同期方法の詳細。ブロブはリポジトリに保存されていませんが、リポジトリレコードからリンクされています。
 
-**Blob Export:** the details of how to export and synchronize blobs (aka, images). Blobs are not stored in repositories, though they are linked from repository records.
+**モデレーションプリミティブ：** 分散モデレーションのための「ラベル」アーキテクチャはリファレンス実装があり、ほとんどがレキシコン（アプリケーションレベル）で指定されていますが、統一されたシステムとしての詳細はまだ記述されていません。同様に、モデレーションレポートの処理とインフラレベルのテイクダウンを行うための`com.atproto.admin.*`ルートはレキシコンで指定されていますが、これも詳細に記述されるべきです。
 
-**Moderation Primitives:** the "label" architecture for distributed moderation has a reference implementation, and is mostly specified in Lexicons (application-level), but has not been described in detail as a unified system. Likewise, the `com.atproto.admin.*` routes for handling moderation reports and doing infrastructure-level take-downs is specified in Lexicons but should also be described in more detail.
+**レキシコンの解決：** 特定のタイプ名（NSID）に対するレキシコンスキーマ定義ファイルを自動的に検索して取得する方法
 
-**Lexicon Resolution:** an automated way to look up and fetch Lexicon schema definition files for a given type name (NSID)
+## 今後の作業
 
-## Future Work
+個々の仕様書には小規模な変更が記載されていますが、いくつかの大規模な変更がプロトコル全体にまたがっています。
 
-Smaller changes are described in individual specification documents, but a few large changes span the entire protocol.
+**サードパーティの認証と承認：** サービス全体での認証（atproto内でのサービス間）およびエコシステム外での「atprotoでログイン」のユースケースのために、より強力な認証システムを提供する意図があります。これには既存の認証規格も組み込まれる可能性が高いです。
 
-**3rd Party Authentication and Authorization:** the intention is to provide a more powerful auth system, both for authentication across services (within atproto), and for "log in with atproto" use cases outside of the ecosystem. This will likely incorporate existing auth standards.
+**非公開コンテンツ：** プライベートグループや1対1の通信のメカニズムが、プロトコル開発の第二段階全体を形成します。これには「プライベートアカウント」、ダイレクトメッセージ、暗号化データなどの基本要素が含まれます。既存のプロトコルプリミティブを使用して暗号化またはプライベートコンテンツを単純に「取り付ける」ことはお勧めしません。
 
-**Non-Public Content:** mechanisms for private group and one-to-one communication will be an entire second phase of protocol development. This encompasses primitives like "private accounts", direct messages, encrypted data, and more. We recommend against simply "bolting on" encryption or private content using the existing protocol primitives.
-
-**Protocol Governance and Formal Standards Process:** The current development focus is to demonstrate all the core protocol features via the reference implementation, including open federation. After that milestone, the intent is to stabilize the lower-level protocol and submit the specification for independent review and revision through a standards body such as the IETF or the W3C.
-
+**プロトコルガバナンスと形式的な標準プロセス：** 現在の開発の焦点はリファレンス実装を介したすべてのコアプロトコル機能のデモンストレーション、オープンな連邦を含むことです。その後の段階では、低レベルのプロトコルを安定化させ、IETFやW3Cなどの標準機関を通じて独立したレビューと修正のために仕様を提出する意図があります。

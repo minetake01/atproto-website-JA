@@ -1,60 +1,57 @@
 ---
 title: DID
-summary: Persistent decentralized identifiers (as used in atproto)
+summary: 永続的な分散型識別子（atprotoで使用されるもの）
 ---
 
 # AT Protocol DIDs
 
-The AT Protocol uses [Decentralized Identifiers](https://en.wikipedia.org/wiki/Decentralized_identifier) (DIDs) as persistent, long-term account identifiers. DID is a W3C standard, with many standardized and proposed DID method implementations.
+AT Protocolは、[分散型識別子](https://en.wikipedia.org/wiki/Decentralized_identifier)（DID）を永続的で長期的なアカウント識別子として使用しています。DIDはW3Cの標準であり、多くの標準化されたおよび提案されたDIDメソッドの実装があります。
 
+## 祝福されたDIDメソッド
 
-## Blessed DID Methods
+現在、atprotoは2つのDIDメソッドをサポートしています：
 
-Currently, atproto supports two DID methods:
+- `did:web`は、HTTPS（およびDNS）に基づくW3C標準です。識別子セクションはホスト名です。このメソッドは、`did:plc`に対する独立した代替手段を提供するためにatprotoでサポートされています。このメソッドは使用されるドメイン名に固有であり、ドメイン名の制御の喪失からの移行や回復のメカニズムを提供しません。atprotoのコンテキストでは、ホスト名レベルの`did:web` DIDsのみがサポートされています。パスベースのDIDはサポートされていません。ハンドルに適用されるトップレベルドメインに関する同じ制限（例：`.arpa`を使用しない）が`did:web`ドメインにも適用されます。特別な`localhost`ホスト名は許可されていますが、テストおよび開発環境でのみです。ポート番号（区切りコロンは16進エンコード）は、`localhost`の場合のみ許可され、テストおよび開発環境でのみ使用されます。
+- `did:plc`は、Blueskyによって開発された新しいDIDメソッドです。詳細については、[did-method-plc](https://github.com/did-method-plc/did-method-plc) GitHubリポジトリを参照してください。このメソッドは「プレースホルダー」と呼ばれていますが、無期限にサポートされます。
 
-- `did:web`, which is a W3C standard based on HTTPS (and DNS). The identifier section is a hostname. This method is supported in atproto to provide an independent alternative to `did:plc`. The method is inherently tied to the domain name used, and does not provide a mechanism for migration or recovering from loss of control of the domain name. In the context of atproto, only hostname-level `did:web` DIDs are supported: path-based DIDs are not supported. The same restrictions on top-level domains that apply to handles (eg, no `.arpa`) also apply to `did:web` domains. The special `localhost` hostname is allowed, but only in testing and development environments. Port numbers (with separating colon hex-encoded) are only allowed for `localhost`, and only in testing and development.
-- `did:plc`, which is a novel DID method developed by Bluesky. See the [did-method-plc](https://github.com/did-method-plc/did-method-plc) GitHub repository for details. Even though this method is referred to as "placeholder", it will be supported indefinitely.
+将来的には、追加のメソッドがサポートされるかもしれません。普遍的なリゾルバーソフトウェアの存在に関係なく、すべてまたは多くのDIDメソッドをサポートする意図はありません。
 
-In the future, a small number of additional methods may be supported. It is not the intention to support all or even many DID methods, even with the existence of universal resolver software.
+## AT Protocol DID識別子構文
 
+語彙文字列の形式：`did`
 
-## AT Protocol DID Identifier Syntax
+DID識別子の構文制約は、使用されるメソッドにかかわらず、DIDコア仕様にあります。これらの構文制約の要約は、atprotoで一般的にDIDを検証するために使用できます：
 
-Lexicon string format type: `did`
+- URI全体は、ASCIIのサブセットで構成され、大文字小文字を区別し、文字（`A-Z`、`a-z`）、数字（`0-9`）、ピリオド、アンダースコア、コロン、パーセント記号、またはハイフン（`._:%-`）を含みます。
+- URIは大文字小文字を区別します。
+- URIは小文字 `did:` で始まります。
+- メソッドセグメントは、1つ以上の小文字の文字（`a-z`）に続いて `:` です。
+- URIの残り部分（識別子）には、パーセント記号（`%`）を除く、上記で許可されたASCII文字が含まれていてもよいです。
+- URI（およびしたがって残りの識別子）は `:` で終わってはいけません。
+- パーセント記号（`%`）は識別子セクションで「パーセントエンコーディング」に使用され、常に2つの16進数の文字に続く必要があります。
+- クエリ（`?`）およびフラグメント（`#`）セクションはDID URIで許可されていますが、DID識別子では許可されていません。atprotoのコンテキストでは、クエリとフラグメント部分は許可されていません。
 
-The DID Core specification constraints on DID identifier syntax, regardless of the method used. A summary of those syntax constraints, which may be used to validate DID generically in atproto are:
+DID識別子には一般的に最大長制限はありませんが、atprotoのコンテキストでは初期の硬い制限が2 KBあります。
 
-- The entire URI is made up of a subset of ASCII, containing letters (`A-Z`, `a-z`), digits (`0-9`), period, underscore, colon, percent sign, or hyphen (`._:%-`)
-- The URI is case-sensitive
-- The URI starts with lowercase `did:`
-- The method segment is one or more lowercase letters (`a-z`), followed by `:`
-- The remainder of the URI (the identifier) may contain any of the above-allowed ASCII characters, except for percent-sign (`%`)
-- The URI (and thus the remaining identifier) may not end in `:`.
-- Percent-sign (`%`) is used for "percent encoding" in the identifier section, and must always be followed by two hex characters
-- Query (`?`) and fragment (`#`) sections are allowed in DID URIs, but not in DID identifiers. In the context of atproto, the query and fragment parts are not allowed.
+atprotoのコンテキストでは、実装はパーセントエンコーディングを検証する必要はありません。パーセント記号はDID識別子セグメントで許可されていますが、識別子はパーセント記号で終わってはいけません。無効なパーセントエンコーディングを含むDIDは、登録、解決などの試みを失敗するはずです。
 
-DID identifiers do not generally have a maximum length restriction, but in the context of atproto, there is an initial hard limit of 2 KB.
-
-In the context of atproto, implementations do not need to validate percent encoding. The percent symbol is allowed in DID identifier segments, but the identifier should not end in a percent symbol. A DID containing invalid percent encoding *should* fail any attempt at registration, resolution, etc.
-
-A reasonable starting-point regex for DIDs in the context of atproto is:
+atprotoのコンテキストでは、DIDに対する合理的な出発点の正規表現は次の通りです：
 
 ```
-// NOTE: does not constrain overall length
+// 注：全体の長さを制約しません
 /^did:[a-z]+:[a-zA-Z0-9._:%-]*[a-zA-Z0-9._-]$/
 ```
 
+### 例
 
-### Examples
-
-Valid DIDs for use in atproto (correct syntax, and supported method):
+atprotoで使用するための有効なDID（正しい構文、およびサポートされているメソッド）：
 
 ```
 did:plc:z72i7hdynmk6r22z27h6tvur
 did:web:blueskyweb.xyz
 ```
 
-Valid DID syntax (would pass Lexicon syntax validation), but unsupported DID method:
+DID構文が有効（Lexicon構文検証を通過する）、ただしサポートされていないDIDメソッド：
 
 ```
 did:method:val:two
@@ -64,7 +61,7 @@ did:method:-:_:.
 did:key:zQ3shZc2QzApp2oymGvQbzP8eKheVshBHbU4ZYjeXqwSKEn6N
 ```
 
-Invalid DID identifier syntax (regardless of DID method):
+無効なDID識別子構文（DIDメソッドに関係なく）：
 
 ```
 did:METHOD:val
@@ -76,73 +73,69 @@ did:method:val?two
 did:method:val#two
 ```
 
-## DID Documents
+## DIDドキュメント
 
-After a DID document has been resolved, atproto-specific information needs to be extracted. This parsing process is agnostic to the DID method used to resolve the document.
+DIDドキュメントが解決された後、atproto固有の情報を抽出する必要があります。この解析プロセスはドキュメントを解決するために使用されるDIDメソッドに対して不可知です。
 
-The current **handle** for the DID is found in the `alsoKnownAs` array. Each element of this array is a URI. Handles will have the URI scheme `at://`, followed by the handle, with no path or other URI parts. The current primary handle is the first valid handle URI found in the ordered list. Any other handle URIs should be ignored.
+現在のDIDの**ハンドル**は `alsoKnownAs` 配列で見つかります。この配列の各要素はURIです。ハンドルはURIスキームが `at://` で始まり、パスや他のURIパーツはなく、現在のDIDドキュメントに一致するか確認するためにハンドルを解決することで、双方向に検証することが重要です。
 
-It is crucial to validate the handle bidirectionally, by resolving the handle to a DID and checking that it matches the current DID document.
+DIDは主要なアカウント識別子であり、DIDドキュメントに有効で確認されたハンドルが含まれていないアカウントは、理論的にはatprotoエコシステムに参加できます。ソフトウェアはそのようなアカウントに対してハンドルを表示しないか、関連するハンドルが無効であることを明示的に示すように注意する必要があります。
 
-The DID is the primary account identifier, and an account whose DID document does not contain a valid and confirmed handle can still, in theory, participate in the atproto ecosystem. Software should be careful to either not display any handle for such account, or obviously indicate that any handle associated with it is invalid.
+アカウントの公開**署名キー**は、`verificationMethod` 配列内にあります。`id`が `#atproto` で終わり、`controller`がDID自体と一致するオブジェクト内にあります。配列内の最初の有効なatproto署名キーが使用され、他のキーは無視されます。`type`フィールドは暗号曲線タイプを示し、`publicKeyMultibase`フィールドはmultibaseエンコーディングの公開鍵を示します。これらのフィールドの解析の詳細については以下を参照してください。
 
-The public **signing key** for the account is found under the `verificationMethod` array, in an object with `id` ending `#atproto`, and the `controller` matching the DID itself. The first valid atproto signing key in the array should be used, and any others ignored. The `type` field will indicate the cryptographic curve type, and the `publicKeyMultibase` field will be the public key in multibase encoding. See below for details for parsing these fields.
+atprotoの機能には有効な署名キーが必要であり、DIDドキュメント内に有効なキーがないアカウントは壊れています。
 
-A valid signing key is required for atproto functionality, and an account with no valid key in their DID document is broken.
+アカウントの**PDSサービスネットワークの場所**は、`service` 配列内にあり、`id`が `#atproto_pds` で終わり、`type`が `AtprotoPersonalDataServer` と一致する必要があります。配列内の最初に一致するエントリを使用し、他のエントリは無視されます。`serviceEndpoint` フィールドにはサーバーのHTTPS URLが含まれている必要があります。これにはURIスキーム（`http`または`https`）、ホスト名、およびオプションのポート番号だけを含め、 "userinfo"、パスプレフィックス、または他のコンポーネントは含まれません。
 
-The **PDS service network location** for the account is found under the `service` array, with `id` ending `#atproto_pds`, and `type` matching `AtprotoPersonalDataServer`. The first matching entry in the array should be used, and any others ignored. The `serviceEndpoint` field must contain an HTTPS URL of server. It should contain only the URI scheme (`http` or `https`), hostname, and optional port number, not any "userinfo", path prefix, or other components.
+atprotoのアカウント機能には動作するPDSが必要であり、DIDドキュメント内に有効なPDSの場所がないアカウントは壊れています。
 
-A working PDS is required for atproto account functionality, and an account with no valid PDS location in their DID document is broken.
+有効なURLは、PDS自体が現在機能しているか、アカウントのためにコンテンツをホストしていることを意味するものではありません。アカウントの移行やサーバーのダウンタイム中には、PDSにアクセスできないウィンドウがあるかもしれませんが、これはすぐにアカウントが壊れて無効と見なされるべきではありません。
 
-Note that a valid URL doesn't mean the the PDS itself is currently functional or hosting content for the account. During account migrations or server downtime there may be windows when the PDS is not accessible, but this does not mean the account should immediately be considered broken or invalid.
+## 公開鍵の表現
 
+atprotoの暗号システムに関する詳細は、[Cryptography](/specs/cryptography)に記載されており、公開鍵のバイトおよび文字列エンコーディングに関する詳細が述べられています。
 
-## Representation of Public Keys
+`verificationMethod`内のDID文書の公開鍵（atproto署名鍵を含む）は、次のフィールドを持つオブジェクトとして表現されます：
 
-The atproto cryptographic systems are described in [Cryptography](/specs/cryptography), including details of byte and string encoding of public keys.
+- `id`（文字列、必須）：DIDの後に識別フラグメントが続きます。atproto署名鍵の場合、フラグメントに`#atproto`を使用します。
+- `type`（文字列、必須）：固定の文字列`Multikey`
+- `controller`（文字列、必須）：鍵を制御するDID。現行バージョンのatprotoでは、アカウントDID自体と一致する必要があります。
+- `publicKeyMultibase`（文字列、必須）：公開鍵そのものを、multibase形式でエンコードしたもの（multicodecタイプインジケータおよび「圧縮」鍵バイトを含む）
 
-Public keys in DID documents under `verificationMethod`, including atproto signing keys, are represented as an object with the following fields:
+`Multikey`の`publicKeyMultibase`形式は、`did:key`と同じエンコーディングスキームですが、`did:key:`接頭辞がない形式です。詳細については、[Cryptography](/specs/cryptography)を参照してください。
 
-- `id` (string, required): the DID followed by an identifying fragment. Use `#atproto` as the fragment for atproto signing keys
-- `type` (string, required): the fixed string `Multikey`
-- `controller` (string, required): DID controlling the key, which in the current version of atproto must match the account DID itself
-- `publicKeyMultibase` (string, required): the public key itself, encoded in multibase format (with multicodec type indicator, and "compressed" key bytes)
+注意: DID `verificationMethod`セクションでP-256公開鍵を使用するためのW3Cの公式標準はまだ存在していませんが、`Multikey`標準はこの鍵タイプのエンコーディングが何であるべきかを明確にしています。
 
-The `publicKeyMultibase` format for `Multikey` is the same encoding scheme as used with `did:key`, but without the `did:key:` prefix. See [Cryptography](/specs/cryptography) for details.
+### 旧来の表現
 
-Note that there is not yet a formal W3C standard for using P-256 public keys in DID `verificationMethod` sections, but that the `Multikey` standard does clarify what the encoding encoding should be for this key type.
+一部の古いDID文書（`did:web`の文書にまだ存在する可能性があります）は、わずかに異なる鍵のエンコーディングと`verificationMethod`構文を持っていました。実装はこれらの古いDID文書を過渡期中にサポートする場合がありますが、将来的にはDIDの仕様準拠が必要となります。
 
+atproto署名鍵の旧来の`verificationMethod`には以下が含まれていました：
 
-### Legacy Representation
+- `id`（文字列、必須）：完全なDIDを含まない固定の文字列`#atproto`
+- `type`（文字列、必須）：鍵の曲線タイプを識別する固定の名前
+    - `p256`：`EcdsaSecp256r1VerificationKey2019`（「r」に注意）
+    - `k256`：`EcdsaSecp256k1VerificationKey2019`（「k」に注意）
+- `controller`（文字列、必須）：鍵を制御するDID。現行バージョンのatprotoでは、アカウントDID自体と一致する必要があります。
+- `publicKeyMultibase`（文字列、必須）：公開鍵そのものを、multibase形式でエンコードしたもの（multicodecなし、および「非圧縮」鍵バイト）
 
-Some older DID documents, which may still appear in `did:web` docs, had slightly different key encodings and `verificationMethod` syntax. Implementations may support these older DID documents during a transition period, but the intentent is to require DID specification compliance going forward.
+注意: `EcdsaSecp256r1VerificationKey2019`タイプはW3Cの最終標準ではありません。
 
-The older `verificationMethod` for atproto signing keys contained:
+`EcdsaSecp256r1VerificationKey2019`の`verificationMethod`はW3Cの最終標準ではありません。`publicKeyMultibase`を使用したP-256公開鍵の表現に関してW3Cで標準化されるものに移行します。これは`Multikey`への移行を意味し、K-256表現も同様にその`type`に移行します。
 
-- `id` (string, required): the fixed string `#atproto`, without the full DID included
-- `type` (string, required): a fixed name identifying the key's curve type
-    - `p256`: `EcdsaSecp256r1VerificationKey2019` (note the "r")
-    - `k256`: `EcdsaSecp256k1VerificationKey2019` (note the "k")
-- `controller` (string, required): DID controlling the key, which in the current version of atproto must match the account DID itself
-- `publicKeyMultibase` (string, required): the public key itself, encoded in multibase format (*without* multicodec, and *uncompressed* key bytes)
+この文脈でのmultibaseエンコーディングの概要：
 
-Note that the `EcdsaSecp256r1VerificationKey2019` type is not a final W3C standard.
+- 完全な公開鍵バイトで始めます。 「圧縮」または「コンパクト」表現を使用しないでください（`did:key`または`Multikey`エンコーディングの場合とは異なります）
+- 鍵の種類を示すmulticodec値をプレフィックスに追加しないでください
+- 鍵バイトを`base58btc`でエンコードし、文字列を生成します
+- プレフィックスとして文字`z`を追加して、multibaseを示し、他のmulticodecインジケータを含めません
 
-The `EcdsaSecp256r1VerificationKey2019` `verificationMethod` is not a final W3C standard. We will move to whatever ends up standardized by W3C for representing P-256 public keys with `publicKeyMultibase`. This may mean a transition to `Multikey`, and we would transition K-256 representations to that `type` as well.
+逆のデコードプロセスは、曲線タイプをコンテキストとして使用します。
 
-A summary of the multibase encoding in this context:
-
-- Start with the full public key bytes. Do not use the "compressed" or "compact" representation (unlike for `did:key` or `Multikey` encoding)
-- Do *not* prefix with a multicodec value indicating the key type
-- Encode the key bytes with `base58btc`, yielding a string
-- Add the character `z` as a prefix, to indicate the multibase, and include no other multicodec indicators
-
-The decoding process is the same in reverse, using the curve type as context.
-
-Here is an example of a single public key encoded in the legacy and current formats:
+以下は、旧来の形式と現在の形式でエンコードされた単一の公開鍵の例です：
 
 ```
-// legacy multibase encoding of K-256 public key
+// K-256公開鍵の旧来のmultibaseエンコーディング
 {
     "id": ...,
     "controller": ...,
@@ -150,7 +143,7 @@ Here is an example of a single public key encoded in the legacy and current form
     "publicKeyMultibase": "zQYEBzXeuTM9UR3rfvNag6L3RNAs5pQZyYPsomTsgQhsxLdEgCrPTLgFna8yqCnxPpNT7DBk6Ym3dgPKNu86vt9GR"
 }
 
-// preferred multibase encoding of same K-256 public key
+// 同じK-256公開鍵の推奨multibaseエンコーディング
 {
     "id": ...,
     "controller": ...,
@@ -159,17 +152,16 @@ Here is an example of a single public key encoded in the legacy and current form
 }
 ```
 
+## 使用および実装ガイドライン
 
-## Usage and Implementation Guidelines
+プロトコルの実装は、サポートされていないDIDメソッドに基づくコンテンツの処理に対して柔軟であるべきです。これは、プロトコルエコシステムの時間とともに徐々に進化させることを許可するために重要です。言い換えれば、実装は少なくとも「無効なDID構文」、「サポートされていないDIDメソッド」、および「サポートされているDIDメソッドだが特定のDID解決に失敗した」の異なるケースを区別すべきです。
 
-Protocol implementations should be flexible to processing content containing DIDs based on unsupported DID methods. This is important to allow gradual evolution of the protocol ecosystem over time. In other words, implementations should distinguish between at least the distinct cases "invalid DID syntax", "unsupported DID method" and "supported DID method, but specific DID resolution failed".
+プロトコルでは長いDIDがサポートされていますが、良いベストプラクティスは比較的短いDIDを使用し、64文字を超えるDIDは避けることです。
 
-While longer DIDs are supported in the protocol, a good best practice is to use relatively short DIDs, and to avoid DIDs longer than 64 characters.
+DIDは大文字と小文字を区別します。現在サポートされているメソッドは大文字と小文字を区別しませんが、プロトコルの実装は無効なケースのDIDを拒否するべきです。ユーザーが制御可能な入力を受け取る場合（例：パブリックURLパスコンポーネントの解析時やテキスト入力フィールドの場合）、ケースの正規化を試みることは許容されます。
 
-DIDs are case-sensitive. While the currently-supported methods are *not* case sensitive, and could be safely lowercased, protocol implementations should reject DIDs with invalid casing. It is permissible to attempt case normalization when receiving user-controlled input, such as when parsing public URL path components, or text input fields.
+## 可能性のある将来の変更
 
-## Possible Future Changes
+プロトコル構文レベルでDIDの最大長制限が縮小される可能性があります。私たちは、サポートを検討しているDIDメソッドが256文字より長い識別子を持つことはないと考えています。
 
-The hard maximum DID length limit may be reduced, at the protocol syntax level. We are not aware of any DID methods that we would consider supporting which have identifiers longer than, say, 256 characters.
-
-There is a good chance that the set of "blessed" DID methods will slowly expand over time.
+「祝福された」DIDメソッドのセットが時間の経過とともに徐々に拡大する可能性が高いです。

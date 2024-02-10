@@ -1,298 +1,300 @@
 ---
-title: Lexicon
-summary: A schema definition language.
+title: レキシコン
+summary: スキーマ定義言語。
 ---
 
-# Lexicon
+# レキシコン
 
-Lexicon is a schema definition language used to describe atproto records, HTTP endpoints (XRPC), and event stream messages. It builds on top of the atproto [Data Model](/specs/data-model).
+レキシコンは、atprotoのレコード、HTTPエンドポイント（XRPC）、およびイベントストリームメッセージを記述するために使用されるスキーマ定義言語です。これは、atproto [データモデル](/specs/data-model)の上に構築されています。
 
-The schema language is similar to [JSON Schema](http://json-schema.org/) and [OpenAPI](https://en.wikipedia.org/wiki/OpenAPI_Specification), but includes some atproto-specific features and semantics.
+このスキーマ言語は、[JSON Schema](http://json-schema.org/)と[OpenAPI](https://en.wikipedia.org/wiki/OpenAPI_Specification)に類似していますが、atproto固有の機能とセマンティクスが含まれています。
 
-This specification describes version 1 of the Lexicon definition language.
+この仕様書は、レキシコン定義言語のバージョン1を説明しています。
 
-## Overview of Types
+## タイプの概要
 
-| Lexicon Type | Data Model Type | Category |
+| レキシコン タイプ | データモデル タイプ | カテゴリ |
 | --- | --- | --- |
-| `null` | Null | concrete |
-| `boolean` | Boolean | concrete |
-| `integer` | Integer | concrete |
-| `string` | String | concrete |
-| `bytes` | Bytes | concrete |
-| `cid-link` | Link | concrete |
-| `blob` | Blob | concrete |
-| `array` | Array | container |
-| `object` | Object | container |
-| `params` |  | container |
-| `token` |  | meta |
-| `ref` |  | meta |
-| `union` |  | meta |
-| `unknown` |  | meta |
-| `record` |  | primary |
-| `query` |  | primary |
-| `procedure` |  | primary |
-| `subscription` |  | primary |
+| `null` | Null | 具体的 |
+| `boolean` | Boolean | 具体的 |
+| `integer` | Integer | 具体的 |
+| `string` | String | 具体的 |
+| `bytes` | Bytes | 具体的 |
+| `cid-link` | Link | 具体的 |
+| `blob` | Blob | 具体的 |
+| `array` | Array | コンテナ |
+| `object` | Object | コンテナ |
+| `params` |  | コンテナ |
+| `token` |  | メタ |
+| `ref` |  | メタ |
+| `union` |  | メタ |
+| `unknown` |  | メタ |
+| `record` |  | プライマリ |
+| `query` |  | プライマリ |
+| `procedure` |  | プライマリ |
+| `subscription` |  | プライマリ |
 
-## Lexicon Files
+## レキシコン ファイル
 
-Lexicons are JSON files associated with a single NSID. A file contains one or more definitions, each with a distinct short name. A definition with the name `main` optionally describes the "primary" definition for the entire file. A Lexicon with zero definitions is invalid.
+レキシコンは単一のNSIDに関連付けられたJSONファイルです。ファイルには1つ以上の定義が含まれ、それぞれが異なる短い名前を持ちます。名前が `main` の定義は、オプションでファイル全体の「プライマリ」定義を記述します。定義がゼロの場合、レキシコンは無効です。
 
-A Lexicon JSON file is an object with the following fields:
+レキシコンJSONファイルは次のフィールドを持つオブジェクトです：
 
-- `lexicon` (integer, required): indicates Lexicon language version. In this version, a fixed value of `1`
-- `id` (string, required): the NSID of the Lexicon
-- `revision` (integer, optional): indicates the version of this Lexicon, if changes have occurred
-- `description` (string, optional): short overview of the Lexicon, usually one or two sentences
-- `defs` (map of strings-to-objects, required): set of definitions, each with a distinct name (key)
+- `lexicon`（整数、必須）：レキシコン言語のバージョンを示します。このバージョンでは、`1` の固定値です。
+- `id`（文字列、必須）：レキシコンのNSID
+- `revision`（整数、オプション）：このレキシコンのバージョンを示します。変更がある場合にのみ指定します。
+- `description`（文字列、オプション）：レキシコンの簡単な概要。通常は1、2文程度です。
+- `defs`（文字列からオブジェクトへのマップ、必須）：異なる名前（キー）を持つ一連の定義
 
-Schema definitions under `defs` all have a `type` field to distinguish their type. A file can have at most one definition with one of the "primary" types. Primary types should always have the name `main`. It is possible for `main` to describe a non-primary type.
+`defs` の下のスキーマ定義には、タイプを区別するための `type` フィールドがあります。ファイルには最大で1つの「プライマリ」タイプの定義が含まれることができます。プライマリタイプは常に `main` という名前を持つべきです。ただし、`main` が非プライマリタイプを記述することも可能です。
 
-References to specific definitions within a Lexicon use fragment syntax, like `com.example.defs#someView`. If a `main` definition exists, it can be referenced without a fragment, just using the NSID. For references in the `$type` fields in data objects themselves (eg, records or contents of a union), this is a "must" (use of a `#main` suffix is invalid). For example, `com.example.record` not `com.example.record#main`.
+レキシコン内の特定の定義への参照は、フラグメント構文を使用して行います（例：`com.example.defs#someView`）。`main` 定義が存在する場合、フラグメントなしでNSIDを使用して参照できます。データオブジェクト自体の `$type` フィールド内での参照（たとえば、レコードまたはユニオンのコンテンツ）では、これが「必須」です（`#main` サフィックスの使用は無効です）。たとえば、`com.example.record` ではなく、`com.example.record#main`。
 
-The semantics of the `revision` field have not been worked out yet, but are intended to help third parties identity the most recent among multiple versions or copies of a Lexicon.
+`revision` フィールドのセマンティクスはまだ確定していませんが、これは第三者が複数のバージョンやコピーの中で最新のものを識別するのに役立つことを意図しています。
 
-Related Lexicons are often grouped together in the NSID hierarchy. As a convention, any definitions used by multiple Lexicons are defined in a dedicated `*.defs` Lexicon (eg, `com.atproto.server.defs`) within the group. A `*.defs` Lexicon should generally not include a definition named `main`, though it is not strictly invalid to do so.
+関連するレキシコンは、通常はNSID階層内でまとめられます。慣例として、複数のレキシコンで使用される定義は、グループ内の専用の `*.defs` レキシコン（例：`com.atproto.server.defs`）で定義されます。`*.defs` レキシコンには一般的に `main` という名前の定義を含めない方が良いですが、厳密には無効ではありません。
 
-## Primary Type Definitions
+## プライマリ タイプの定義
 
-The primary types are:
+プライマリタイプは次のとおりです：
 
-- `query`: describes an XRPC Query (HTTP GET)
-- `procedure`: describes an XRPC Procedure (HTTP POST)
-- `subscription`: Event Stream (WebSocket)
-- `record`: describes an object that can be stored in a repository record
+- `query`：XRPC Query（HTTP GET）を説明します。
+- `procedure`：XRPC Procedure（HTTP POST）を説明します。
+- `subscription`：イベントストリーム（WebSocket）
+- `record`：リポジトリレコードに保存できるオブジェクトを記述します。
 
-Each primary definition schema object includes these fields:
+各プライマリ定義スキーマオブジェクトには、次のフィールドが含まれます：
 
-- `type` (string, required): the type value (eg, `record` for records)
-- `description` (string, optional): short, usually only a sentence or two
+- `type`（文字列、必須）：タイプの値（例：レコードの場合は `record`）
+- `description`（文字列、オプション）：簡単で通常1、2文の説明
 
-### Record
+### レコード
 
-Type-specific fields:
+タイプ固有のフィールド：
 
-- `key` (string, required): specifies the [Record Key type](/specs/record-key)
-- `record` (object, required): a schema definition with type `object`, which specifies this type of record
+- `key`（文字列、必須）：[Record Key タイプ](/specs/record-key) を指定します。
+- `record`（オブジェクト、必須）：このレコードのタイプを指定する `object` タイプのスキーマ定義
 
-### Query and Procedure (HTTP API)
+### クエリおよび手順（HTTP API）
 
-Type-specific fields:
+タイプ固有のフィールド：
 
-- `parameters` (object, optional): a schema definition with type `params`, describing the HTTP query parameters for this endpoint
-- `output` (object, optional): describes the HTTP response body
-    - `description` (string, optional): short description
-    - `encoding` (string, required): MIME type for body contents. Use `application/json` for JSON responses.
-    - `schema` (object, optional): schema definition, either an `object`, a `ref`, or a `union` of refs. Used to describe JSON encoded responses, though schema is optional even for JSON responses.
-- `input` (object, optional, only for `procedure`): describes HTTP request body schema, with the same format as the `output` field
-- `errors` (array of objects, optional): set of string error codes which might be returned
-    - `name` (string, required): short name for the error type, with no whitespace
-    - `description` (string, optional): short description, one or two sentences
+- `parameters`（オブジェクト、オプション）：このエンドポイントのHTTPクエリパラメータを記述する `params` タイプのスキーマ定義
+- `output`（オブジェクト、オプション）：HTTPレスポンスボディを記述します
+    - `description`（文字列、オプション）：簡単な説明
+    - `encoding`（文字列、必須）：ボディコンテンツのMIMEタイプ。JSONレスポンスの場合は `application/json` を使用します。
+    - `schema`（オブジェクト、オプション）：スキーマ定義、`object`、`ref`、または `union` のいずれか。JSONエンコードされた応答を記述するために使用されますが、JSONレスポンスに対してもスキーマはオプションです。
+- `input`（オブジェクト、オプション、`procedure` のみ）：HTTPリクエストボディのスキーマを記述します。フォーマットは `output` フィールドと同じです。
+- `errors`（オブジェクトの配列、オプション）：返される可能性のあるエラーコードのセット
+    - `name`（文字列、必須）：エラータイプの短い名前、空白なし
+    - `description`（文字列、オプション）：簡単な説明、1、2文
 
-### Subscription (Event Stream)
+### 購読（イベントストリーム）
 
-Type-specific fields:
+タイプ固有のフィールド：
 
-- `parameters` (object, optional): same as Query and Procedure
-- `message` (object, optional): specifies what messages can be
-    - `description` (string, optional): short description
-    - `schema` (object, required): schema definition, which must be a `union` of refs
-- `errors` (array of objects, optional): same as Query and Procedure
+- `parameters`（オブジェクト、オプション）: クエリと手続きと同じ
+- `message`（オブジェクト、オプション）: どのメッセージが可能かを指定
+    - `description`（文字列、オプション）: 簡単な説明
+    - `schema`（オブジェクト、必須）: `union` の参照でなければならないスキーマ定義
+- `errors`（オブジェクトの配列、オプション）: クエリと手続きと同じ
 
-Subscription schemas (referenced by the `schema` field under `message`) must be a `union` of refs, not an `object` type.
+購読スキーマ（`message`の`schema`フィールドで参照されるもの）は、`object`タイプではなく、`union`のrefsである必要があります。
 
-## Field Type Definitions
+## フィールドタイプの定義
 
-As with the primary definitions, every schema object includes these fields:
+主な定義と同様に、すべてのスキーマオブジェクトにはこれらのフィールドが含まれます。
 
-- `type` (string, required): fixed value for each type
-- `description` (string, optional): short, usually only a sentence or two
+- `type`（文字列、必須）: 各タイプの固定値
+- `description`（文字列、オプション）: 短い、通常は一文または二文だけ
 
 ### `null`
 
-No additional fields.
+追加のフィールドはありません。
 
 ### `boolean`
 
-Type-specific fields:
+タイプ固有のフィールド：
 
-- `default` (boolean, optional): a default value for this field
-- `const` (boolean, optional): a fixed (constant) value for this field
+- `default`（ブール、オプション）: このフィールドのデフォルト値
+- `const`（ブール、オプション）: このフィールドの固定（定数）値
 
-When included as an HTTP query parameter, should be rendered as `true` or `false` (no quotes).
+HTTPクエリパラメータとして含まれる場合、`true`または`false`（クォートなし）にレンダリングされる必要があります。
 
 ### `integer`
 
-A signed integer number.
+符号付き整数。
 
-Type-specific fields:
+タイプ固有のフィールド：
 
-- `minimum` (integer, optional): minimum acceptable value
-- `maximum` (integer, optional): maximum acceptable value
-- `enum` (array of integers, optional): a closed set of allowed values
-- `default` (integer, optional): a default value for this field
-- `const` (integer, optional): a fixed (constant) value for this field
+- `minimum`（整数、オプション）: 最小許容値
+- `maximum`（整数、オプション）: 最大許容値
+- `enum`（整数の配列、オプション）: 許容される値のクローズドセット
+- `default`（整数、オプション）: このフィールドのデフォルト値
+- `const`（整数、オプション）: このフィールドの固定（定数）値
 
 ### `string`
 
-Type-specific fields:
+タイプ固有のフィールド：
 
-- `format` (string, optional): string format restriction
-- `maxLength` (integer, optional): maximum length of value, in UTF-8 bytes
-- `minLength` (integer, optional): minimum length of value, in UTF-8 bytes
-- `maxGraphemes` (integer, optional): maximum length of value, counted as Unicode Grapheme Clusters
-- `minGraphemes` (integer, optional): minimum length of value, counted as Unicode Grapheme Clusters
-- `knownValues` (array of strings, options: a set of suggested or common values for this field. Values are not limited to this set (aka, not a closed enum).
-- `enum` (array of strings, optional): a closed set of allowed values
-- `default` (string, optional): a default value for this field
-- `const` (string, optional): a fixed (constant) value for this field
+- `format`（文字列、オプション）: 文字列のフォーマット制約
+- `maxLength`（整数、オプション）: 値の最大長、UTF-8バイト単位
+- `minLength`（整数、オプション）: 値の最小長、UTF-8バイト単位
+- `maxGraphemes`（整数、オプション）: Unicode Grapheme Clustersとしてカウントされる場合の値の最大長
+- `minGraphemes`（整数、オプション）: Unicode Grapheme Clustersとしてカウントされる場合の値の最小長
+- `knownValues`（文字列の配列、オプション）: このフィールドの提案または共通の値のセット。値はこのセットに限定されない（つまりクローズドenumではない）。
+- `enum`（文字列の配列、オプション）: 許容される値のクローズドセット
+- `default`（文字列、オプション）: このフィールドのデフォルト値
+- `const`（文字列、オプション）: このフィールドの固定（定数）値
 
-Strings are Unicode. For non-Unicode encodings, use `bytes` instead. The basic `minLength`/`maxLength` validation constraints are counted as UTF-8 bytes. Note that Javascript stores strings with UTF-16 by default, and it is necessary to re-encode to count accurately. The `minGraphemes`/`maxGraphemes` validation constraints work with Grapheme Clusters, which have a complex technical and linguistic definition, but loosely correspond to "distinct visual characters" like Latin letters, CJK characters, punctuation, digits, or emoji (which might comprise multiple Unicode codepoints and many UTF-8 bytes).
+文字列はUnicodeです。非Unicodeエンコーディングの場合は、代わりに`bytes`を使用してください。基本的な`minLength`/`maxLength`の検証制約はUTF-8バイトとして数えられます。JavaScriptはデフォルトでUTF-16で文字列を保存するため、正確に数えるには再エンコードが必要です。`minGraphemes`/`maxGraphemes`の検証制約はGrapheme Clustersで機能し、これは技術的および言語的に複雑な定義を持っていますが、ルーズには「異なる視覚的な文字」に対応します。これにはラテン文字、CJK文字、句読点、数字、または絵文字などが含まれる可能性があります（これは複数のUnicodeコードポイントと多くのUTF-8バイトで構成されるかもしれません）。
 
-`format` constrains the string format and provides additional semantic context. Refer to the Data Model specification for the available format types and their definitions.
+`format`は文字列のフォーマットを制約し、追加の意味論的コンテキストを提供します。使用可能なフォーマットタイプとそれらの定義については、Data Model仕様を参照してください。
 
-`const` and `default` are mutually exclusive.
+`const`と`default`は互換性がありません。
 
 ### `bytes`
 
-Type-specific fields:
+タイプ固有のフィールド：
 
-- `minLength` (integer, optional): minimum size of value, as raw bytes with no encoding
-- `maxLength` (integer, optional): maximum size of value, as raw bytes with no encoding
+- `minLength`（整数、オプション）: エンコーディングのない生のバイトの値の最小サイズ
+- `maxLength`（整数、オプション）: エンコーディングのない生のバイトの値の最大サイズ
 
 ### `cid-link`
 
-No type-specific fields.
+タイプ固有のフィールドはありません。
 
-See [Data Model spec](/specs/data-model) for CID restrictions.
+CIDの制約については[Data Model仕様](/specs/data-model
+
+)を参照してください。
 
 ### `array`
 
-Type-specific fields:
+タイプ固有のフィールド：
 
-- `items` (object, required): describes the schema elements of this array
-- `minLength` (integer, optional): minimum count of elements in array
-- `maxLength` (integer, optional): maximum count of elements in array
+- `items`（オブジェクト、必須）: この配列のスキーマ要素を説明
+- `minLength`（整数、オプション）: 配列内の要素の最小数
+- `maxLength`（整数、オプション）: 配列内の要素の最大数
 
-In theory arrays have homogeneous types (meaning every element as the same type). However, with union types this restriction is meaningless, so implementations can not assume that all the elements have the same type.
+理論的には、配列は均質な型を持つはずです（つまり、すべての要素が同じ型を持つという意味）。ただし、共用型の場合、この制約は無意味であるため、実装はすべての要素が同じ型であるとは仮定できません。
 
 ### `object`
 
-A generic object schema which can be nested inside other definitions by reference.
+他の定義内で参照されることができる一般的なオブジェクトスキーマ。
 
-Type-specific fields:
+タイプ固有のフィールド：
 
-- `properties` (map of strings-to-objects, required): defines the properties (fields) by name, each with their own schema
-- `required` (array of strings, optional): indicates which properties are required
-- `nullable` (array of strings, optional): indicates which properties can have `null` as a value
+- `properties`（文字列からオブジェクトへのマップ、必須）: 名前ごとに定義されたプロパティ（フィールド）
+- `required`（文字列の配列、オプション）: 必要なプロパティを示します
+- `nullable`（文字列の配列、オプション）: 値として`null`を持つことができるプロパティを示します
 
-As described in the data model specification, there is a semantic difference in data between omitting a field; including the field with the value `null`; and including the field with a "false-y" value (`false`, `0`, empty array, etc).
+データモデル仕様に記載されているように、フィールドを省略することと、`null`の値を持つフィールドを含むこと、および「false-y」な値（`false`、`0`、空の配列など）を含むことの間にはセマンティックな違いがあります。
 
 ### `blob`
 
-Type-specific fields:
+タイプ固有のフィールド：
 
-- `accept` (array of strings, optional): list of acceptable MIME types. Each may end in `*` as a glob pattern (eg, `image/*`). Use `*/*` to indicate that any MIME type is accepted.
-- `maxSize` (integer, optional): maximum size in bytes
+- `accept`（文字列の配列、オプション）: 受け入れ可能なMIMEタイプのリスト。各タイプはグロブパターンとして`*`で終わる場合があります（例: `image/*`）。どのMIMEタイプも受け入れる場合は`*/*`を使用します。
+- `maxSize`（整数、オプション）: バイト単位での最大サイズ
 
 ### `params`
 
-This is a limited-scope type which is only ever used for the `parameters` field on `query`, `procedue`, and `subscription` primary types. These map to HTTP query parameters.
+これは限定されたスコープのタイプであり、`query`、`procedure`、および`subscription`の主要なタイプの`parameters`フィールドでのみ使用されます。これらはHTTPクエリパラメータにマップされます。
 
-Type-specific fields:
+タイプ固有のフィールド：
 
-- `required` (array of strings, optional): same semantics as field on `object`
-- `properties`: similar to properties under `object`, but can only include the types `boolean`, `integer`, `string`, and `unknown`; or an `array` of one of these types
+- `required`（文字列の配列、オプション）：`object`のフィールドと同じセマンティクス
+- `properties`：`object`の下のプロパティと似ていますが、`boolean`、`integer`、`string`、および`unknown`のタイプのいずれか、またはこれらのタイプのいずれかの`array`のみを含めることができます。
 
-Note that unlike `object`, there is no `nullable` field on `params`.
+`params`には`object`とは異なり、`nullable`フィールドはありません。
 
 ### `token`
 
-Tokens are empty data values which exist only to be referenced by name. They are used to define a set of values with specific meanings. The `description` field should clarify the meaning of the token.
+トークンは名前で参照されるだけの空のデータ値です。特定の意味を持つ値のセットを定義するために使用されます。 `description` フィールドはトークンの意味を明確にする必要があります。
 
-Tokens are similar to the concept of a "symbol" in some programming languages, distinct from strings, variables, built-in keywords, or other identifiers.
+トークンは一部のプログラミング言語の「シンボル」の概念に類似しており、文字列、変数、組み込みのキーワード、または他の識別子とは異なります。
 
-For example, tokens could be defined to represent the state of an entity (in a state machine), or to enumerate a list of categories.
+例えば、トークンはエンティティの状態（ステートマシン内の）、またはカテゴリのリストを列挙するために定義される可能性があります。
 
-No type-specific fields.
+タイプ固有のフィールドはありません。
 
 ### `ref`
 
-Type-specific fields:
+タイプ固有のフィールド：
 
-- `ref` (string, required): reference to another schema definition
+- `ref`（文字列、必須）：別のスキーマ定義への参照
 
-Refs are a mechanism for re-using a schema definition in multiple places. The `ref` string can be a global reference to a Lexicon type definition (an NSID, optionally with a `#`-delimited name indicating a definition other than `main`), or can indicate a local definition within the same Lexicon file (a `#` followed by a name).
+`ref`は、スキーマ定義を複数の場所で再利用するための仕組みです。`ref`文字列は、Lexiconタイプ定義（NSIDであることもあり、オプションで`main`以外の定義を示す`#`で区切られた名前を含む）へのグローバルな参照であるか、同じLexiconファイル内のローカルな定義を示すことができます（`#`の後に名前が続きます）。
 
 ### `union`
 
-Type-specific fields:
+タイプ固有のフィールド：
 
-- `refs` (array of strings, required): references to schema definitions
-- `closed` (boolean, optional): indicates if a union is "open" or "closed". defaults to `false` (open union)
+- `refs`（文字列の配列、必須）：スキーマ定義への参照
+- `closed`（ブール、オプション）：unionが「オープン」または「クローズド」かを示します。デフォルトは`false`（オープンunion）
 
-Unions represent that multiple possible types could be present at this location in the schema. The references follow the same syntax as `ref`, allowing references to both global or local schema definitions. Actual data will validate against a single specific type: the union does not *combine* fields from multiple schemas, or define a new *hybrid* data type. The different types are referred to as **variants**.
+Unionは、スキーマ内のこの場所に複数の可能なタイプが存在することを示します。参照は`ref`と同じ構文を使用し、グローバルまたはローカルのスキーマ定義の両方を参照できます。実際のデータは単一の特定のタイプに対して検証されます：unionは複数のスキーマからフィールドを*組み合わせない*か、新しい*ハイブリッド*データタイプを定義しません。異なるタイプは **variants** と呼ばれます。
 
-By default unions are "open", meaning that future revisions of the schema could add more types to the list of refs (though can not remove types). This means that implementations should be permissive when validating, in case they do not have the most recent version of the Lexicon. The `closed` flag (boolean) can indicate that the set of types is fixed and can not be extended in the future.
+デフォルトでは、unionは「オープン」であり、将来のスキーマの改訂で参照リストにさらなるタイプを追加できます（タイプを削除することはできません）。これは、実装がLexiconの最新バージョンを持っていない場合に対応するために、検証時に寛容であるべきであることを意味します。`closed`フラグ（ブール）は、タイプのセットが固定され、将来に拡張できないことを示すことができます。
 
-A `union` schema definition with no `refs` is allowed and similar to `unknown`, as long as the `closed` flag is false (the default). An empty refs list with `closed` set to true is an invalid schema.
+`refs`がない`union`スキーマ定義は、`unknown`と同様に許可されます（デフォルトでは`closed`フラグがfalseである限り）。 `closed`をtrueに設定した空のrefsリストは無効なスキーマです。
 
-The schema definitions pointed to by a `union` are generally objects or types with a clear mapping to an object, like a `record`. All the variants must be represented by a CBOR map (or JSON Object) and include a `$type` field indicating the variant type.
+`union`によって指定されたスキーマは一般的にはオブジェクトまたはオブジェクトに明確なマッピングを持つタイプで、 `record` のようなものです。すべてのバリアントはCBORマップ（またはJSONオブジェクト）によって表現され、バリアントタイプを示す `$type` フィールドを含める必要があります。
 
 ### `unknown`
 
-Indicates than any data could appear at this location, with no specific validation. Note that the data must still be valid under the data model: it can't contain unsupported things like floats.
+この場所には特定の検証がないまま、任意のデータが表示されることを示します。ただし、データはデータモデルの下で依然として有効でなければなりません。これは、浮動小数点などのサポートされていないものを含むことはできません。
 
-No type-specific fields.
+タイプ固有のフィールドはありません。
 
-## String Formats
+## 文字列フォーマット
 
-Strings can optionally be constrained to one of the following `format` types:
+文字列はオプションで次の`format`タイプのいずれかに制約されることがあります。
 
-- `at-identifier`: either a [Handle](/specs/handle) or a [DID](/specs/did), details described below
-- `at-uri`: [AT-URI](/specs/at-uri-scheme)
-- `cid`: CID in string format, details specified in [Data Model](/specs/data-model)
-- `datetime`: timestamp, details specified below
-- `did`: generic [DID Identifier](/specs/did)
-- `handle`: [Handle Identifier](/specs/handle)
-- `nsid`: [Namespaced Identifier](/specs/nsid)
-- `uri`: generic URI, details specified below
-- `language`: language code, details specified below
+- `at-identifier`：[Handle](/specs/handle)または[DID](/specs/did)のいずれか、詳細は以下に記載
+- `at-uri`：[AT-URI](/specs/at-uri-scheme)
+- `cid`：文字列形式のCID、データモデルで指定された詳細
+- `datetime`：タイムスタンプ、以下に指定された詳細
+- `did`：汎用[DID Identifier](/specs/did)
+- `handle`：[Handle Identifier](/specs/handle)
+- `nsid`：[Namespaced Identifier](/specs/nsid)
+- `uri`：汎用URI、以下に指定された詳細
+- `language`：言語コード、以下に指定された詳細
 
-For the various identifier formats, when doing Lexicon schema validation the most expansive identifier syntax format should be permitted. Problems with identifiers which do pass basic syntax validation should be reported as application errors, not lexicon data validation errors. For example, data with any kind of DID in a `did` format string field should pass Lexicon validation, with unsupported DID methods being raised separately as an application error.
+さまざまな識別子フォーマットの場合、Lexiconスキーマ検証時に最も広範な識別子構文形式を許可するべきです。基本的な構文検証をパスしない識別子に関する問題は、レキシコンデータ検証エラーではなく、アプリケーションエラーとして報告する必要があります。例えば、`did`フォーマットの文字列フィールドにはどの種類のDIDメソッドも含まれていないデータは、アプリケーションエラーとして別個に発生すべきです。
 
 ### `at-identifier`
 
-A string type which is either a DID (type: did) or a handle (handle). Mostly used in XRPC query parameters. It is unambiguous whether an at-identifier is a handle or a DID because a DID always starts with did:, and the colon character (:) is not an allowed in handles.
+これは、DID（type: did）またはハンドル（handle）である文字列型です。主にXRPCクエリパラメータで使用されます。at-identifierがハンドルまたはDIDであるかどうかは明確です。なぜなら、DIDは常にdid:で始まり、コロン文字（：）はハンドルでは許可されていないからです。
 
 ### `datetime`
 
-Full-precision date and time, with timezone information.
+タイムゾーン情報を含むフルプレシジョンの日時です。
 
-This format is intended for use with computer-generated timestamps in the modern computing era (eg, after the UNIX epoch). If you need to represent historical or ancient events, ambiguity, or far-future times, a different format is probably more appropriate. Datetimes before the Current Era (year zero) as specifically disallowed.
+この形式は、現代のコンピューティング時代（UNIXエポック以降）のコンピュータ生成のタイムスタンプとの使用を意図しています。歴史的なイベント、曖昧さ、または遠い未来の時間を表す場合は、異なる形式が適している可能性があります。現在の時代（ゼロ年）以前の日時は特に許可されていません。
 
-Datetime format standards are notoriously flexible and overlapping. Datetime strings in atproto should meet the [intersecting](https://ijmacd.github.io/rfc3339-iso8601/) requirements of the [RFC 3339](https://www.rfc-editor.org/rfc/rfc3339), [ISO 8601](https://en.wikipedia.org/wiki/ISO_8601), and [WHATWG HTML](https://html.spec.whatwg.org/#dates-and-times) datetime standards.
+日時形式の標準は非常に柔軟で重複しています。atprotoの日時文字列は[RFC 3339](https://www.rfc-editor.org/rfc/rfc3339)、[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601)、および[WHATWG HTML](https://html.spec.whatwg.org/#dates-and-times)の日時標準の**交差する**要件を満たす必要があります。
 
-The character separating "date" and "time" parts must be an upper-case `T`.
+「日付」と「時間」の部分を分離する文字は大文字の `T` である必要があります。
 
-Timezone specification is required. It is *strongly* preferred to use the UTC timezone, and to represent the timezone with a simple capital `Z` suffix (lower-case is not allowed). While hour/minute suffix syntax (like `+01:00` or `-10:30`) is supported, "negative zero" (`-00:00`) is specifically disallowed (by ISO 8601).
+タイムゾーンの指定が必要です。UTCタイムゾーンを使用し、タイムゾーンを単純な大文字の `Z` 接尾辞で表現することが*強く*推奨されています（小文字は許可されていません）。時間/分接尾辞構文（`+01:00`や`-10:30`のような）がサポートされていますが、「負のゼロ」（`-00:00`）は明示的に許可されていません（ISO 8601による）。
 
-Whole seconds precision is required, and arbitrary fractional precision digits are allowed. Best practice is to use at least millisecond precision, and to pad with zeros to the generated precision (eg, trailing `:12.340Z` instead of `:12.34Z`). Not all datetime formatting libraries support trailing zero formatting. Both millisecond and microsecond precision have reasonable cross-language support; nanosecond precision does not.
+全秒の精度が必要であり、任意の小数点以下の精度桁が許可されています。ベストプラクティスは、少なくともミリ秒の精度を使用し、生成された精度にゼロをパディングすることです（例：`12.340Z`の代わりに`12.34Z`の後にゼロを追加）。すべての日時フォーマットライブラリが末尾のゼロのフォーマットをサポートしているわけではありません。ミリ秒およびマイクロ秒の精度は合理的なクロスランゲージサポートを持っていますが、ナノ秒の精度はありません。
 
-Implementations should be aware when round-tripping records containing datetimes of two ambiguities: loss-of-precision, and ambiguity with trailing fractional second zeros. If de-serializing Lexicon records in to native types, and then re-serializing, the string representation may not be the same, which could result in broken hash references, sanity check failures, or repository update churn. A safer thing to do is to deserialize the datetime as a simple string, which ensures round-trip re-serialization.
+実装は、日時の往復時に生じる2つの曖昧さに注意する必要があります：精度の低下と末尾の小数秒ゼロの曖昧さ。Lexiconレコードをネイティブなタイプに逆シリアル化してから再シリアル化する場合、文字列表現が同じでない可能性があり、破損したハッシュ参照、正当性チェックの失敗、またはリポジトリの更新の過剰が発生する可能性があります。安全な方法は、日時を単純な文字列として逆シリアル化することで、往復の再シリアル化を確実にします。
 
-Implementations "should" validate that the semantics of the datetime are valid. For example, a month or day `00` is invalid.
+実装は日時のセマンティクスが有効であることを検証すべきです（例：月や日が`00`の場合は無効です）。
 
-Valid examples:
+有効な例：
 
 ```text
-# preferred
+# 推奨
 1985-04-12T23:20:50.123Z
 1985-04-12T23:20:50.123456Z
 1985-04-12T23:20:50.120Z
 1985-04-12T23:20:50.120000Z
 
-# supported
+# サポートされている
 1985-04-12T23:20:50.12345678912345Z
 1985-04-12T23:20:50Z
 1985-04-12T23:20:50.0Z
@@ -300,7 +302,7 @@ Valid examples:
 1985-04-12T23:20:50.123-07:00
 ```
 
-Invalid examples:
+無効な例：
 
 ```text
 1985-04-12
@@ -323,71 +325,70 @@ Invalid examples:
 1985-04-12T23:20:50.123-00:00
 1985-04-12 23:20:50.123Z
 
-# timezone is required
+# タイムゾーンが必要です
 1985-04-12T23:20:50.123
 
-# syntax looks ok, but datetime is not valid
+# 構文は正常に見えるが、日時は無効です
 1985-04-12T23:99:50.123Z
 1985-00-12T23:20:50.123Z
 ```
 
 ### `uri`
 
-Flexible to any URI schema, following the generic RFC-3986 on URIs. This includes, but isn’t limited to: `did`, `https`, `wss`, `ipfs` (for CIDs), `dns`, and of course `at`.
-Maximum length in Lexicons is 8 KBytes.
+任意のURIスキーマに柔軟に対応し、URIに関する汎用RFC-3986に従います。これには、`did`、`https`、`wss`、`ipfs`（CID用）、`dns`、そしてもちろん`at`などが含まれます。Lexicons内の最大長は8 KBytesです。
 
 ### `language`
 
-An [IETF Language Tag](https://en.wikipedia.org/wiki/IETF_language_tag) string, compliant with [BCP 47](https://www.rfc-editor.org/info/bcp47), defined in [RFC 5646](https://www.rfc-editor.org/rfc/rfc5646.txt) ("Tags for Identifying Languages"). This is the same standard used to identify languages in HTTP, HTML, and other web standards. The Lexicon string must validate as a "well-formed" language tag, as defined in the RFC. Clients should ignore language strings which are "well-formed" but not "valid" according to the RFC.
+[IETF言語タグ](https://en.wikipedia.org/wiki/IETF_language_tag)文字列で、[BCP 47](https://www.rfc-editor.org/info/bcp47)に準拠し、[RFC 5646](https://www.rfc-editor.org/rfc/rfc5646.txt)（"Tags for Identifying Languages"）で定義されています。これはHTTP、HTML、および他のWeb標準で言語を識別するために使用される標準です。Lexicon文字列はRFCで定義されているように "well-formed" 言語タグとして検証する必要があります。クライアントはRFCによれば "well-formed" であるが RFCによって "valid" でない言語文字列を無視すべきです。
 
-As specified in the RFC, ISO 639 two-character and three-character language codes can be used on their own, lower-cased, such as `ja` (Japanese) or `ban` (Balinese). Regional sub-tags can be added, like `pt-BR` (Brazilian Portuguese). Additional subtags can also be added, such as `hy-Latn-IT-arevela`.
+RFCで指定されているように、ISO 639の2文字および3文字の言語コードは単独で、小文字で使用できます。例として、`ja`（日本語）や`ban`（バリ語）などが挙げられます。地域サブタグを追加することもできます。例えば、`pt-BR`（ブラジルポルトガル語）です。また、`hy-Latn-IT-arevela`のように追加のサブタグも使用できます。
 
-Language codes generally need to be parsed, normalized, and matched semantically, not simply string-compared. For example, a search engine might simplify language tags to ISO 639 codes for indexing and filtering, while a client application (user agent) would retain the full language code for presentation (text rendering) locally.
+言語コードは一般的に解析、正規化、および意味的な一致が必要であり、単純な文字列比較ではありません。例えば、検索エンジンは言語タグをISO 639コードに簡略化してインデックス化およびフィルタリングに使用するかもしれませんが、クライアントアプリケーション（ユーザーエージェント）は表示（テキストのレンダリング）のために完全な言語コードを保持するでしょう。
 
-## When to use `$type`
+## `$type`の使用時
 
-Data objects sometimes include a `$type` field which indicates their Lexicon type. The general principle is that this field needs to be included any time there could be ambiguity about the content type when validating data.
+データオブジェクトには、そのLexiconタイプを示す `$type` フィールドが含まれることがあります。一般的な原則は、データを検証する際にコンテンツのタイプについて曖昧性がある場合、このフィールドを含める必要があるというものです。
 
-The specific rules are:
+具体的なルールは以下の通りです：
 
-- `record` objects must always include `$type`. While the type is often known from context (eg, the collection part of the path for records stored in a repository), record objects can also be passed around outside of repositories and need to be self-describing
-- `union` variants must always include `$type`, except at the top level of `subscription` messages
+- `record` オブジェクトには常に `$type` を含める必要があります。タイプは通常コンテキストから判明しますが（たとえば、リポジトリに格納されたレコードのパスのコレクション部分など）、レコードオブジェクトはリポジトリの外でも渡され、自己記述する必要があります。
+- `union` バリアントは常に `$type` を含める必要がありますが、`subscription` メッセージのトップレベルでは必要ありません。
 
-Note that `blob` objects always include `$type`, which allows generic processing.
+`blob` オブジェクトは常に `$type` を含むため、汎用処理が可能です。
 
-As a reminder, `main` types must be referenced in `$type` fields as just the NSID, not including a `#main` suffix.
+注意として、`main` タイプは `$type` フィールドに NSID のみを参照する必要があり、`#main` 接尾辞は含めません。
 
-## Lexicon Evolution
+## Lexiconの進化
 
-Lexicons are allowed to change over time, within some bounds to ensure both forwards and backwards compatibility. The basic principle is that all old data must still be valid under the updated Lexicon, and new data must be valid under the old Lexicon.
+Lexiconsは時間の経過とともに変更が許可されており、前方と後方の互換性を確保するためにある程度の範囲内で変更できます。基本的な原則は、すべての古いデータは更新されたLexiconの下でまだ有効でなければならず、新しいデータは古いLexiconの下で有効でなければなりません。
 
-- Any new fields must be optional
-- Non-optional fields can not be removed. A best practice is to retain all fields in the Lexicon and mark them as deprecated if they are no longer used.
-- Types can not change
-- Fields can not be renamed
+- 任意の新しいフィールドはオプションである必要があります。
+- 非オプションのフィールドは削除できません。ベストプラクティスとして、使用されなくなった場合はすべてのフィールドをLexiconに保持し、それらを非推奨とマークすることです。
+- タイプは変更できません。
+- フィールドの名前を変更できません。
 
-If larger breaking changes are necessary, a new Lexicon name must be used.
+より大きな破壊的な変更が必要な場合、新しいLexicon名を使用する必要があります。
 
-It can be ambiguous when a Lexicon has been published and becomes "set in stone". At a minimum, public adoption and implementation by a third party, even without explicit permission, indicates that the Lexicon has been released and should not break compatibility. A best practice is to clearly indicate in the Lexicon type name any experimental or development status. Eg, `com.corp.experimental.newRecord`.
+Lexiconが公開され、"確定" されたと見なされる時点はあいまいです。最低限、公的な採用とサードパーティによる実装は、明示的な許可がなくてもLexiconがリリースされ、互換性を壊してはならないことを示唆します。ベストプラクティスとして、実験的または開発中のステータスをLexiconタイプ名に明示的に示すことです。例： `com.corp.experimental.newRecord`。
 
-## Authority and Control
+## 権威と制御
 
-The authority for a Lexicon is determined by the NSID, and rooted in DNS control of the domain authority. That authority has ultimate control over the Lexicon definition, and responsibility for maintenance and distribution of Lexicon schema definitions.
+Lexiconの権限はNSIDによって決定され、ドメイン権限のDNS制御に根ざしています。その権限はLexiconの定義に対する最終的な制御を持ち、Lexiconスキーマの定義の維持と配布の責任があります。
 
-In a crisis, such as unintentional loss of DNS control to a bad actor, the protocol ecosystem could decide to disregard this chain of authority. This should only be done in exceptional circumstances, and not as a mechanism to subvert an active authority. The primary mechanism for resolving protocol disputes is to fork Lexicons in to a new namespace.
+危機の場合、たとえばDNS制御が悪意のあるアクターによって意図せず失われた場合、プロトコルエコシステムはこの権限連鎖を無視することを決定するかもしれません。これは例外的な状況でのみ行われるべきであり、アクティブな権威を逸脱するメカニズムとしてではありません。プロトコルの紛争を解決する主要なメカニズムは、新しい名前空間にLexiconをフォークすることです。
 
-Protocol implementations should generally consider data which fails to validate against the Lexicon to be entirely invalid, and should not try to repair or do partial processing on the individual piece of data.
+プロトコルの実装は、一般的にLexiconに対して検証に失敗したデータを完全に無効と見なすべきであり、データの個々の部分に対して修復や部分的な処理を試みるべきではありません。
 
-Unexpected fields in data which otherwise conforms to the Lexicon should be ignored. When doing schema validation, they should be treated at worst as warnings. This is necessary to allow evolution of the schema by the controlling authority, and to be robust in the case of out-of-date Lexicons.
+それ以外のLexiconに準拠しているデータに予期しないフィールドが含まれている場合、これらは無視されるべきです。スキーマの検証時には、最悪の場合警告として扱われるべきです。これは、制御権限を持つ権威によるスキーマの進化と、古いLexiconの場合にも強固である必要があるためです。
 
-Third parties can technically insert any additional fields they want in to data. This is not the recommended way to extend applications, but it is not specifically disallowed. One danger with this is that the Lexicon may be updated to include fields with the same field names but different types, which would make existing data invalid.
+第三者は技術的にはデータに任意の追加フィールドを挿入できます。これはアプリケーションを拡張するための推奨されない方法ですが、特に禁止されているわけではありません。これの危険性の一つは、Lexiconが同じフィールド名でも異なるタイプのフィールドを含むように更新される可能性があるため、既存のデータが無効になる可能性があることです。
 
-## Usage and Implementation Guidelines
+## 使用と実装のガイドライン
 
-It should be possible to translate Lexicon schemas to JSON Schema or OpenAPI and use tools and libraries from those ecosystems to work with atproto data in JSON format.
+LexiconスキーマをJSON SchemaやOpenAPIに変換し、それらのエコシステムのツールやライブラリを使用して、JSON形式のatprotoデータと連携できるようにすることが望ましいです。
 
-Implementations which serialize and deserialize data from JSON or CBOR in to structures derived from specific Lexicons should be aware of the risk of "clobbering" unexpected fields. For example, if a Lexicon is updated to add a new (optional) field, old implementations would not be aware of that field, and might accidentally strip the data when de-serializing and then re-serializing. Depending on the context, one way to avoid this problem is to retain any "extra" fields, or to pass-through the original data object instead of re-serializing it.
+JSONやCBORから特定のLexiconから派生した構造体にシリアライズおよびデシリアライズする実装は、予期しないフィールドの「clobbering」のリスクを認識する必要があります。たとえば、Lexiconが新しい（オプションの）フィールドを追加するように更新された場合、古い実装はそのフィールドを認識せず、デシリアライズおよび再シリアライズ時にデータを意図せず削除する可能性があります。コンテキストによっては、この問題を回避する方法として「余分な」フィールドを保持するか、元のデータオブジェクトを再シリアライズする代わりにそのまま渡す方法があります。
 
-## Possible Future Changes
+## 可能性のある将来の変更
 
-The validation rules for unexpected additional fields may change. For example, a mechanism for Lexicons to indicate that the schema is "closed" and unexpected fields are not allowed, or a convention around field name prefixes (`x-`) to indicate unofficial extension.
+予期しない追加フィールドの検証ルールは変更される可能性があります。例えば、スキーマが「閉じられていて予期しないフィールドは許可されない」と示すためのLexiconのメカニズム、または非公式な拡張を示すためのフィールド名接頭辞（`x-`）に関する慣習などが考えられます。

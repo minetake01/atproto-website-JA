@@ -1,136 +1,136 @@
 ---
-title: Event Stream
-summary: Network wire protocol for subscribing to a stream of Lexicon objects
+title: イベントストリーム
+summary: Lexiconオブジェクトのストリームにサブスクライブするためのネットワークワイヤープロトコル
 wip: true
 ---
 
-# Event Stream
+# イベントストリーム
 
-In addition to regular [HTTP API](/specs/xrpc) endpoints, atproto supports continuous event streams. Message schemas and endpoint names are transport-agnostic and defined in [Lexicons](/specs/lexicon). The initial encoding and transport scheme uses binary [DAG-CBOR](https://ipld.io/docs/codecs/known/dag-cbor/) encoding over [WebSockets](https://en.wikipedia.org/wiki/WebSocket).
+通常の [HTTP API](/specs/xrpc) エンドポイントに加えて、atprotoは連続したイベントストリームをサポートしています。メッセージスキーマとエンドポイントの名前はトランスポートに依存せず、[Lexicons](/specs/lexicon) で定義されています。初期のエンコーディングとトランスポートスキームでは、バイナリの [DAG-CBOR](https://ipld.io/docs/codecs/known/dag-cbor/) エンコーディングが [WebSockets](https://en.wikipedia.org/wiki/WebSocket) を介して使用されます。
 
-The Lexicon type for streams is `subscription`. The schema includes an identifier (`id`) for the endpoint, a `message` schema (usually a union, allowing multiple message types), and a list of error types (`errors`).
+ストリームのLexiconタイプは `subscription` です。スキーマにはエンドポイントの識別子 (`id`)、`message` スキーマ（通常はユニオンで、複数のメッセージタイプを許可）、およびエラータイプのリスト (`errors`) が含まれます。
 
-Clients subscribe to a specific stream by initiating a connection at the indicated endpoint. Streams are currently one-way, with messages flowing from the server to the client. Clients may provide query parameters to configure the stream when opening the connection.
+クライアントは指定されたエンドポイントで接続を開始することで特定のストリームにサブスクライブします。現在、ストリームは一方通行で、メッセージはサーバからクライアントに流れます。クライアントは接続を開く際にストリームを構成するためのクエリパラメータを提供できます。
 
-A **backfill window** mechanism allows clients to catch up with stream messages they may have missed. At a high level, this works by assigning monotonically increasing sequence numbers to stream events, and allowing clients to specify an initial sequence number when initiating a connection. The intent of this mechanism is to ensure reliable delivery of events following disruptions during a reasonable time window (eg, hours or days). It is not to enable clients to roll all the way back to the beginning of the stream.
+**バックフィルウィンドウ**メカニズムを使用すると、クライアントは逃したかもしれないストリームメッセージに追いつくことができます。これは、ストリームイベントに単調に増加するシーケンス番号を割り当て、クライアントが接続を開始するときに初期のシーケンス番号を指定できるようにすることで高レベルで機能します。このメカニズムの目的は、合理的な時間ウィンドウ（例：数時間または数日）内において、イベントの信頼性のある配信を確保することです。これはクライアントがストリームの最初に戻ることを可能にするものではありません。
 
-All of the initial subscription Lexicons in the `com.atproto` namespace use the backfill mechanism. However, a backfill mechanism (and even cursors, which we define below) is not _required_ for streams. Subscription endpoints which do not require reliable delivery do not need to implement a backfill mechanism or use sequence numbers.
+`com.atproto` ネームスペースの初期サブスクリプションLexiconはすべてバックフィルメカニズムを使用しています。ただし、ストリームに信頼性のある配信が必要でないサブスクリプションエンドポイントは、バックフィルメカニズムを実装する必要はありませんし、シーケンス番号を使用する必要もありません。
 
-The initial subscription endpoints are also public and do not require authentication or prior permission to subscribe (though resource limits may be imposed on client). But subscription endpoints may require authentication at connection time, using the existing HTTP API (XRPC) authentication methods.
+初期のサブスクリプションエンドポイントは公開されており、事前の許可や認証は必要ありません（ただし、クライアントにはリソース制限が課せられるかもしれません）。ただし、サブスクリプションエンドポイントでは接続時に既存のHTTP API（XRPC）認証メソッドを使用して認証が必要な場合があります。
 
 
-## Streaming Wire Protocol (v0)
+## ストリーミングワイヤープロトコル（v0）
 
-To summarize, messages are encoded as DAG-CBOR and sent over a binary WebSocket. Clients connect to to a specific HTTP endpoint, with query parameters, then upgrade to WebSocket. Every WebSocket frame contains two DAG-CBOR objects, with bytes concatenated together: a header (indicating message type), and the actual message.
+要約すると、メッセージはDAG-CBORとしてエンコードされ、バイナリのWebSocketを介して送信されます。クライアントはクエリパラメータを使用して特定のHTTPエンドポイントに接続し、次にWebSocketにアップグレードします。各WebSocketフレームには2つのDAG-CBORオブジェクトが含まれ、バイトが連結されます：ヘッダ（メッセージタイプを示す）と実際のメッセージ。
 
-The WebSockets "living standard" is currently maintained by [WHATWG](https://en.wikipedia.org/wiki/WHATWG), and can be found in full at [https://websockets.spec.whatwg.org/](https://websockets.spec.whatwg.org/).
+WebSocketsの "living standard" は現在、[WHATWG](https://en.wikipedia.org/wiki/WHATWG) によってメンテナンスされており、完全な仕様は [https://websockets.spec.whatwg.org/](https://websockets.spec.whatwg.org/) で確認できます。
 
-### Connection
+### 接続
 
-Clients initialize stream subscriptions by opening an HTTP connection and upgrading to a WebSocket. HTTPS and "WebSocket Secure" (`wss://`) on the default port (443) should be used for all connections on the internet. HTTP, cleartext WebSocket (`ws://`), and non-standard ports should only be used for testing, development, and local connections (for example, behind a reverse proxy implementing SSL). From the client perspective, failure to upgrade connection to a WebSocket is an error.
+クライアントはHTTP接続を開始し、WebSocketにアップグレードしてストリームにサブスクライブを初期化します。インターネット上でのすべての接続には、デフォルトポート（443）での `wss://` を使用する必要があります。HTTP、クリアテキストWebSocket (`ws://`)、および非標準のポートは、テスト、開発、およびローカル接続（たとえばSSLを実装したリバースプロキシの背後）にのみ使用するべきです。クライアントの視点から、接続をWebSocketにアップグレードできない場合はエラーです。
 
-Query parameters may be provided in the initial HTTP request to configure the stream in an application-specific way, as specified in the endpoint's Lexicon schema.
+クエリパラメータは、エンドポイントのLexiconスキーマで指定されたアプリケーション固有の方法でストリームを構成するために、初期のHTTPリクエストに提供できます。
 
-Errors are usually returned through the stream itself. Connection-time errors are sent as the first message on the stream, and then the server drops the connection. But some errors can not be handled through the stream, and are returned as HTTP errors:
+エラーは通常、ストリーム自体を介して返されます。接続時のエラーはストリーム上の最初のメッセージとして送信され、次にサーバは接続を切断します。ただし、一部のエラーはストリームを介して処理できず、HTTPエラーとして返されます。
 
-- `405 Method Not Allowed`: Returned to client for non-GET HTTP requests to a stream endpoint.
-- `426 Upgrade Required`: Returned to client if `Upgrade` header is not included in a request to a stream endpoint.
-- `429 Too Many Requests`: Frequently used for rate-limiting. Client may try again after a delay. Support for the `Retry-After` header is encouraged.
-- `500 Internal Server Error`: Client may try again after a delay
-- `501 Not Implemented`: Service does not implement WebSockets or streams, at least for this endpoint. Client should not try again.
-- `502 Bad Gateway`, `503 Service Unavailable`, `504 Gateway Timeout`: Client may try again after a delay
+- `405 Method Not Allowed`: ストリームエンドポイントへの非GET HTTPリクエストに対してクライアントに返されます。
+- `426 Upgrade Required`: ストリームエンドポイントへのリクエストに `Upgrade` ヘッダが含まれていない場合、クライアントに返されます。
+- `429 Too Many Requests`: 頻繁に使用されるレート制限のために返されます。クライアントは遅延後に再試行できます。 `Retry-After` ヘッダのサポートが奨励されています。
+- `500 Internal Server Error`: クライアントは遅延後に再試行できます。
+- `501 Not Implemented`: サービスはWebSocketsまたはストリームを実装していない、少なくともこのエンドポイントではありません。クライアントは再試行すべきではありません。
+- `502 Bad Gateway`, `503 Service Unavailable`, `504 Gateway Timeout`: クライアントは遅延後に再試行できます。
 
-Servers *should* return HTTP bodies as JSON with the standard XRPC error message schema for these status codes. But clients also need to be robust to unexpected response body formats. A common situation is receiving a default load-balancer or reverse-proxy error page during scheduled or unplanned downtime.
+これらのステータスコードに対して、サーバは標準のXRPCエラーメッセージスキーマを使用してHTTPボディをJSONとして返すべきです。ただし、クライアントは予期せぬ応答ボディの形式にも堅牢である必要があります。定期的または計画的なダウンタイム中にデフォルトのロードバランサーまたはリバースプロキシエラーページを受信することは一般的な状況です。
 
-Either the server or the client may decided to drop an open stream connection if there have been no messages for some time. It is also acceptable to leave connections open indefinitely.
+サーバまたはクライアントは、一定の時間メッセージがない場合に開いているストリーム接続を切断することがあります。接続を無期限に開いておくことも許容されています。
 
-### Framing
+### フレーミング
 
-Each binary WebSocket frame contains two DAG-CBOR objects, concatenated. The first is a **header** and the second is the **payload.**
+各バイナリWebSocketフレームには2つのDAG-CBORオブジェクトが含まれ、連結されます。最初のものは **ヘッダ** で、2番目は **ペイロード** です。
 
-The header DAG-CBOR object has the following fields:
+ヘッダDAG-CBORオブジェクトには次のフィールドがあります：
 
-- `op` ("operation", integer, required): fixed values, indicating what this frame contains
-    - `1`: a regular message, with type indicated by `t`
-    - `-1`: an error message
-- `t` ("type", string, optional): required if `op` is `1`, indicating the Lexicon sub-type for this message, in short form. Does not include the full Lexicon identifier, just a fragment. Eg: `#commit`. Should not be included in header if `op` is `-1`.
+- `op` ("operation", integer, required): このフレームが何を含んでいるかを示す固定値
+    - `1`: タイプが `t` によって指定される通常のメッセージ
+    - `-1`: エラーメッセージ
+- `t` ("type", string, optional): `op` が `1` の場合は必須。このメッセージのためのLexiconサブタイプを示す短い形式。フルLexicon識別子は含まれず、フラグメントのみです。例：`#commit`。 `op` が `-1` の場合、ヘッダには含めないでください。
 
-Clients should ignore frames with headers that have unknown `op` or `t` values. Unknown fields in both headers and payloads should be ignored. Invalid framing or invalid DAG-CBOR encoding are hard errors, and the client should drop the entire connection instead of skipping the frame. Servers should ignore any frames received from the client, not treat them as errors.
+クライアントは、未知の `op` または `t` 値を持つヘッダを無視するべきです。ヘッダとペイロードの両方の未知のフィールドは無視されるべきです。無効なフレーミングまたは無効なDAG-CBORエンコーディングは厳格なエラーであり、クライアントはフレームをスキップするのではなく、接続全体を切断すべきです。サーバはクライアントから受け取ったフレームを無視し、それをエラーとして扱うべきです。
 
-Error payloads all have the following fields:
+エラーペイロードには常に次のフィールドが含まれます：
 
-- `error` (string, required): the error type name, with no namespace or `#` prefix
-- `message` (string, optional): a description of the error
+- `error` (string, required): エラータイプ名、ネームスペースや `#` 接頭辞なし
+- `message` (string, optional): エラーの説明
 
-Streams should be closed immediately following transmitting or receiving an error frame.
+エラーフレームの送受信後、ストリームは即座に閉じられるべきです。
 
-Message payloads must always be objects. They should omit the `$type` field, as this information is already indicated in the header. There is no specific limit on the size of WebSocket frames in atproto, but they should be kept reasonably small (around a couple megabytes).
+メッセージペイロードは常にオブジェクトである必要があります。ヘッダで既にこの情報が示されているため、 `$type` フィールドは省略するべきです。atprotoではWebSocketフレームのサイズに特定の制限はありませんが、適度に小さく保つべきです（約数メガバイト程度）。
 
-If a client can not keep up with the rate of messages, the server may send a "too slow" error and close the connection.
+クライアントがメッセージのレートに追いつけない場合、サーバは "too slow" エラーを送信して接続を閉じることがあります。
 
-### Sequence Numbers
+### シーケンス番号
 
-Streams can optionally make use of per-message sequence numbers to improve the reliability of transmission. Clients keep track of the last sequence number they received and successfully processed, and can specify that number after a re-connection to receive any missed messages, up to some roll-back window. Servers persist no client state across connections. The semantics are similar to [Apache Kafka](https://en.wikipedia.org/wiki/Apache_Kafka)'s consumer groups and other stream-processing protocols.
+ストリームはオプションでメッセージごとのシーケンス番号を使用して信頼性を向上させることができます。クライアントは受信および正常に処理された最後のシーケンス番号を追跡し、再接続後にその番号を指定して逃したメッセージを受信できます。サーバは接続を超えてクライアントの状態を永続化しません。セマンティクスは [Apache Kafka](https://en.wikipedia.org/wiki/Apache_Kafka) のコンシューマーグループおよび他のストリーム処理プロトコルに類似しています。
 
-Subscription Lexicons must include a `seq` field (integer type), and a `cursor` query parameter (integer type). Not all message types need to include `seq`. Errors do not, and it is common to have an `#info` message type that is not persisted.
+サブスクリプションLexiconには `seq` フィールド（整数型）と `cursor` クエリパラメーター（整数型）を含める必要があります。すべてのメッセージタイプが `seq` を含める必要はありません。エラーは含めず、永続化されない `#info` メッセージタイプがあることが一般的です。
 
-Sequence numbers are always positive integers (non-zero), and increase monotonically, but otherwise have flexible semantics. They may contain arbitrary gaps. For example, they might be timestamps.
+シーケンス番号は常に正の整数（ゼロでない）であり、単調に増加しますが、それ以外の柔軟なセマンティクスを持ちます。任意のギャップを含む可能性があります。たとえば、タイムスタンプである可能性があります。
 
-To prevent confusion when working with Javascript (which by default represents all numbers as floating point), sequence numbers should be limited to the range of integers which can safely be represented by a 64-bit float. That is, the integer range `1` to `2^53` (not inclusive on the upper bound).
+JavaScriptで作業する際の混乱を防ぐために（デフォルトですべての数値を浮動小数点数として表すJavaScript）、シーケンス番号は64ビットフロートで安全に表現できる整数範囲に制限すべきです。つまり、整数範囲 `1` から `2^53` まで（上限を含まず）です。
 
-The connection-time rules for cursors and sequence numbers:
+カーソルとシーケンス番号の接続時のルール：
 
-- no `cursor` is specified: the server starts transmitting from the current stream position
-- `cursor` is higher than current `seq` ("in the future"): server sends an error message and closes connection
-- `cursor` is in roll-back window: server sends any persisted messages with greater-or-equal `seq` number, then continues once "caught up" with current stream
-- `cursor` is older than roll-back window: the first message in stream is an info indicating that `cursor` is too-old, then starts at the oldest available `seq` and sends the entire roll-back window, then continues with current stream
-- `cursor` is `0`: server will start at the oldest available `seq`, send the entire roll-back window, then continue with current stream
+- `cursor` が指定されていない場合：サーバは現在のストリーム位置から送信を開始します。
+- `cursor` が現在の `seq` よりも大きい（"未来"）場合：サーバはエラーメッセージを送信して接続を閉じます。
+- `cursor` がロールバックウィンドウ内にある場合：サーバは `seq` 番号が大きいまたは等しい任意の永続化されたメッセージを送信し、現在のストリームに追いついたら続行します。
+- `cursor` がロールバックウィンドウよりも古い場合：ストリーム内の最初のメッセージは、`cursor` が古すぎると示すinfoであり、次に利用可能な最も古い `seq` から始まり、整个のロールバックウィンドウを送信し、次に現在のストリームを続行します。
+- `cursor` が `0` の場合：サーバは利用可能な最も古い `seq` から始まり、整个のロールバックウィンドウを送信し、次に現在のストリームを続行します。
 
-The scope for sequence numbers is the combination of service provider (hostname) and endpoint (NSID). This roughly corresponds to the `wss://` URL used for connections. That is, sequence numbers may or may not be unique across different stream endpoints on the same service.
+シーケンス番号の範囲はサービスプロバイダー（ホスト名）とエンドポイント（NSID）の組み合わせです。これは通常、接続に使用される `wss://` URL に対応します。つまり、シーケンス番号は同じサービス上の異なるストリームエンドポイント間で一意であるかどうかが異なるかもしれません。
 
-Services should ensure that sequence numbers are not re-used, usually by committing events (with sequence number) to robust persistent storage before transmitting them over streams.
+サービスは通常、シーケンス番号が再利用されないようにする必要があります。これは通常、イベント（シーケンス番号付き）を頑丈な永続ストレージにコミットする前にストリームを通じて送信することによって実現されます。
 
-In some catastrophic failure modes (or large changes to infrastructure), it is possible that a server would lose data from the backfill window, and need to reset the sequence number back to `1`. In this case, if a client re-connects with a higher number, the server would send back a `FutureCursor` error to the client. The client needs to decide what strategy to follow in these scenarios. We suggest that clients treat out-of-order or duplicate sequence numbers as an error, not process the message, and drop the connection. Most clients should not reset sequence state without human operator intervention, though this may be a reasonable behavior for some ephemeral clients not requiring reliable delivery of every event in the stream.
+いくつかの壊滅的な障害モード（またはインフラストラクチャの大きな変更）では、サーバがバックフィルウィンドウのデータを失い、シーケンス番号を `1` にリセットする必要がある可能性があります。この場合、クライアントがより高い番号で再接続すると、サーバはクライアントに `FutureCursor` エラーを返します。クライアントはこれらのシナリオでどの戦略を採用するかを決定する必要があります。通常、クライアントは順序外または重複したシーケンス番号をエラーとして扱い、メッセージを処理せずに接続を切断すべきです。ほとんどのクライアントは、人間のオペレータの介入なしにシーケンス状態をリセットすべきではありませんが、これはストリーム内のすべてのイベントの信頼性のある配信が不要な一部の一時的なクライアントにとっては合理的な動作かもしれません。
 
-## Usage and Implementation Guidelines
+## 使用および実装ガイドライン
 
-The current stream transport is primarily designed for server-to-server data synchronization. It is also possible for web applications to connect directly from end-user browsers, but note that decoding binary frames and DAG-CBOR is non-trivial.
+現在のストリームトランスポートは主にサーバー間データ同期のために設計されています。Webアプリケーションがエンドユーザーブラウザから直接接続することも可能ですが、バイナリフレームとDAG-CBORのデコードは非常に難しいことに注意してください。
 
-The combination of HTTP redirects and WebSocket upgrades is not consistently supported by WebSocket client libraries. Support is not specifically required or forbidden in atproto.
+HTTPリダイレクトとWebSocketのアップグレードの組み合わせは、WebSocketクライアントライブラリで一貫してサポートされていません。atprotoでは明示的に必要または禁止されていません。
 
-Supported versions of the WebSockets standard are not specified by atproto. The current stable WebSocket standard is version 13. Implementations should make reasonable efforts to support modern versions, with some window of backwards compatibility.
+atprotoによってWebSockets標準のサポートされているバージョンは指定されていません。現在の安定したWebSocket標準はバージョン13です。実装は、モダンなバージョンをサポートする合理的な努力をし、ある程度の後方互換性を保持するべきです。
 
-WebSockets have distinct resource rate-limiting and denial-of-service issues. Network bandwidth limits and throttling are recommended for both servers and clients. Servers should tune concurrent connection limits and buffer sizes to prevent resource exhaustion.
+WebSocketsには明確なリソースの制限とサービス妨害の問題があります。ネットワーク帯域幅の制限とスロットリングは、サーバーとクライアントの両方に推奨されています。サーバーは同時接続制限とバッファサイズを調整して、リソース枯渇を防ぐべきです。
 
-If services need to reset sequence state, it is recommended to chose a new initial sequence number with a healthy margin above any previous sequence number. For example, after persistent storage loss, or if clearing prior stream state.
+サービスがシーケンスの状態をリセットする必要がある場合、新しい初期シーケンス番号を前のシーケンス番号よりも健全な余裕を持って選択することが推奨されています。たとえば、永続的なストレージの損失後、または前のストリーム状態をクリアする場合です。
 
-URLs referencing a stream endpoint at a particular host should generally use `wss://` as the URI scheme (as opposed to `https://`).
+特定のホストのストリームエンドポイントを参照するURLは、通常`wss://`をURIスキームとして使用するべきです（`https://`ではなく）。
 
-## Security and Privacy Considerations
+## セキュリティとプライバシーの考慮事項
 
-As mentioned in the "Connection" section, only `wss://` (SSL) should be used for stream connections over the internet. Public services should reject non-SSL connections.
+"接続"セクションで述べたように、インターネット上のストリーム接続には`wss://`（SSL）のみを使用すべきです。公共サービスは非SSL接続を拒否すべきです。
 
-Most HTTP XRPC endpoints work with content in JSON form, while stream endpoints work directly with DAG-CBOR objects as untrusted input. Precautions must be taken against hostile data encoding and data structure manipulation. Specific issues are discussed in the [Data Model](/specs/data-model) and [Repository](/specs/repository) specifications.
+ほとんどのHTTP XRPCエンドポイントはJSON形式のコンテンツで動作しますが、ストリームエンドポイントは信頼できない入力として直接DAG-CBORオブジェクトで動作します。敵対的なデータエンコーディングとデータ構造の操作に対する注意が必要です。具体的な問題は[データモデル](/specs/data-model)および[リポジトリ](/specs/repository)の仕様で議論されています。
 
-## Possible Future Changes
+## 可能な将来の変更
 
-Event Streams are one of the newest components of the AT Protocol, and the details are more likely to be iterated on compared to other components.
+イベントストリームはATプロトコルの最新のコンポーネントの一つであり、詳細は他のコンポーネントと比較して反復される可能性が高いです。
 
-The sequence number scheme may be tweaked to better support sharded streams. The motivation would be handle higher data throughputs over the public internet by splitting across multiple connections.
+シーケンス番号のスキームは、シャーディングされたストリームをより効果的にサポートするために調整されるかもしれません。その動機は、複数の接続を介して公共インターネット上でより高いデータスループットを処理することです。
 
-Additional transports (other than WebSocket) and encodings (other than DAG-CBOR) may be specified. For example, JSON payloads in text WebSocket frames would be simpler to decode in browsers.
+追加のトランスポート（WebSocket以外）およびエンコーディング（DAG-CBOR以外）が指定される可能性があります。たとえば、ブラウザでのデコードが簡単なテキストWebSocketフレーム内のJSONペイロードです。
 
-Additional WebSocket features may be adopted:
+追加のWebSocketの機能が採用されるかもしれません：
 
-- transport compression "extensions" like `permessage-deflate`
-- definition of a sub-protocol
-- bi-directional messaging
-- 1000-class response codes
+- トランスポート圧縮の「拡張機能」、`permessage-deflate`のようなもの
+- サブプロトコルの定義
+- 双方向メッセージング
+- 1000クラスの応答コード
 
-Ambiguities in this specification may be resolved, or left open. For example:
+この仕様書の曖昧な点は解決されるか、または開かれるかもしれません。例：
 
-- HTTP redirects
-- CORS and other issues for browser connections
-- maximum message/frame size
+- HTTPリダイレクト
+- ブラウザ接続のCORSおよびその他の問題
+- メッセージ/フレームの最大サイズ
 
-Authentication schemes may be supported, similar to those for regular HTTP XRPC endpoints.
+通常のHTTP XRPCエンドポイントと同様に、認証スキームがサポートされるかもしれません。

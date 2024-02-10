@@ -1,49 +1,50 @@
 ---
-title: Handle
-summary: A specification for human-friendly account identifiers.
+title: ハンドル
+summary: 人間にやさしいアカウント識別子の仕様。
+
 ---
 
-# Handle
+# ハンドル
 
-DIDs are the long-term persistent identifiers for accounts in atproto, but they can be opaque and unfriendly for human use. Handles are a less-permanent identifier for accounts. The mechanism for verifying the link between an account handle and an account DID relies on DNS, and possibly connections to a network host, so every handle must be a valid network hostname. *Almost* every valid "hostname" is also a valid handle, though there are a small number of exceptions.
+DID（分散識別子）は、atprotoのアカウントのための長期的な永続的な識別子ですが、人間には不透明で使いづらいことがあります。ハンドルはアカウントのためのより永続性の低い識別子です。アカウントハンドルとアカウントDIDのリンクを検証するメカニズムはDNSに依存し、ネットワークホストへの接続も考慮されます。そのため、すべてのハンドルは有効なネットワークホスト名である必要があります。ほとんどの有効な「ホスト名」は有効なハンドルでもありますが、いくつかの例外があります。
 
-The definition "hostnames" (as a subset of all possible "DNS names") has evolved over time and across several RFCs. Some relevant documents are [RFC-1035](https://www.rfc-editor.org/rfc/rfc1035), [RFC-3696](https://www.rfc-editor.org/rfc/rfc3696) section 2, and [RFC-3986](https://www.rfc-editor.org/rfc/rfc3986) section 3.
+「ホスト名」（すべての「DNS名」のサブセット）の定義は、時間といくつかのRFCにわたり進化しています。関連する文書には、[RFC-1035](https://www.rfc-editor.org/rfc/rfc1035)、[RFC-3696](https://www.rfc-editor.org/rfc/rfc3696)セクション2、および[RFC-3986](https://www.rfc-editor.org/rfc/rfc3986)セクション3があります。
 
-## Handle Identifier Syntax
+## ハンドル識別子の構文
 
-Lexicon string format type: `handle`
+レキシコン文字列フォーマットタイプ：`handle`
 
-To synthesize other standards, and define "handle" syntax specifically:
+他の標準を合成し、特に「ハンドル」構文を定義するには：
 
-- The overall handle must contain only ASCII characters, and can be at most 253 characters long (in practice, handles may be restricted to a slightly shorter length)
-- The overall handle is split in to multiple segments (referred to as "labels" in standards documents), separated by ASCII periods (`.`)
-- No proceeding or trailing ASCII periods are allowed, and there must be at least two segments. That is, "bare" top-level domains are not allowed as handles, even if valid "hostnames" and "DNS names." "Trailing dot" syntax for DNS names is not allowed for handles.
-- Each segment must have at least 1 and at most 63 characters (not including the periods). The allowed characters are ASCII letters (`a-z`), digits (`0-9`), and hyphens (`-`).
-- Segments can not start or end with a hyphen
-- The last segment (the "top level domain") can not start with a numeric digit
-- Handles are not case-sensitive, and should be normalized to lowercase (that is, normalize ASCII `A-Z` to `a-z`)
+- 全体のハンドルはASCII文字のみを含み、最大で253文字までです（実際にはハンドルはやや短い長さに制限される可能性があります）。
+- 全体のハンドルはASCIIピリオド（`.`）で区切られた複数のセグメント（標準文書では「ラベル」と呼ばれます）に分割されます。
+- 先頭または末尾のASCIIピリオドは許可されず、少なくとも2つのセグメントが必要です。つまり、「裸の」トップレベルドメインはハンドルとして許可されません。有効な「ホスト名」と「DNS名」であっても、DNS名の「トレイリングドット」構文はハンドルには許可されません。
+- 各セグメントは、少なくとも1文字、最大で63文字まで（ピリオドを含まず）でなければなりません。許可される文字はASCIIのアルファベット（`a-z`）、数字（`0-9`）、ハイフン（`-`）です。
+- セグメントはハイフンで始まりまたは終了してはなりません。
+- 最後のセグメント（「トップレベルドメイン」）は数字で始まってはいけません。
+- ハンドルは大文字小文字を区別せず、小文字に正規化する必要があります（すなわち、ASCII `A-Z` を `a-z` に正規化します）。
 
-To be explicit (the above rules already specify this), no whitespace, null bytes, joining characters, or other ASCII control characters are allowed in the handle, including as prefix/suffix.
+明示的に述べると（上記の規則はすでにこれを指定しています）、ハンドルにはハンドルのプレフィックス/サフィックスとして含まれるスペース、ヌルバイト、結合文字、その他のASCII制御文字は許可されません。
 
-Modern "hostnames" (and thus handles) allow ASCII digits in most positions, with the exception that the last segment (top-level domain, TLD) cannot start with a digit.
+現代の「ホスト名」（したがってハンドル）はほとんどの位置でASCII数字を許可しますが、最後のセグメント（トップレベルドメイン、TLD）は数字で始まってはいけません。
 
-IP addresses are not valid syntax: IPv4 addresses have a final segment starting with a digit, and IPv6 addresses are separated by colons (`:`).
+IPアドレスは有効な構文ではありません。IPv4アドレスは最後のセグメントが数字で始まり、IPv6アドレスはコロン（`:`）で区切られています。
 
-A reference regular expression (regex) for the handle syntax is:
+ハンドル構文の参照正規表現（regex）は以下の通りです：
 
 ```
 /^([a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$/
 ```
 
-## Additional Non-Syntax Restrictions
+## その他の非構文制限
 
-"Reserved" top-level domains should not fail syntax validation (eg, in atproto Lexicon validation), but they must immediately fail any attempt at registration, resolution, etc. See also: [https://en.wikipedia.org/wiki/Top-level_domain#Reserved_domains](https://en.wikipedia.org/wiki/Top-level_domain#Reserved_domains)
+「予約された」トップレベルドメインは構文の検証には失敗すべきではありません（例：atproto Lexicon検証）、ただし、登録、解決などの試みは直ちに失敗する必要があります。参照：[https://en.wikipedia.org/wiki/Top-level_domain#Reserved_domains](https://en.wikipedia.org/wiki/Top-level_domain#Reserved_domains)
 
-`.local` hostnames (for mDNS on local networks) should not be used in atproto.
+ローカルネットワーク上のmDNSのための`.local`ホスト名はatprotoでは使用しないでください。
 
-The `.onion` TLD is a special case for Tor protocol hidden services. Resolution of handles via Tor would require ecosystem-wide support, so they are currently disallowed.
+`.onion` TLDはTorプロトコルの隠れたサービスのための特別なケースです。Torを介したハンドルの解決にはエコシステム全体のサポートが必要なため、現在は禁止されています。
 
-To summarize the above, the initial list of disallowed TLDs includes:
+上記をまとめると、初期の非許可TLDのリストには以下が含まれます：
 
 - `.alt`
 - `.arpa`
@@ -54,27 +55,27 @@ To summarize the above, the initial list of disallowed TLDs includes:
 - `.localhost`
 - `.onion`
 
-The `.test` TLD is intended for examples, testing, and development. It may be used in atproto development, but should fail in real-world environments.
+`.test` TLDは例、テスト、開発のために用意されています。atprotoの開発では使用できますが、実際の環境では失敗するはずです。
 
-The `.invalid` TLD should only be used for the special `handle.invalid` value (see below). This value is syntactically valid in the Lexicon schema language, but should not be accepted as a valid handle in most contexts.
+`.invalid` TLDは特別な`handle.invalid`値のためにのみ使用されるべきです（以下参照）。この値は構文的にはLexiconスキーマ言語で有効ですが、ほとんどのコンテキストで有効なハンドルとして受け入れられるべきではありません。
 
-## Identifier Examples
+## 識別子の例
 
-Syntactically valid handles (which may or may not have existing TLDs):
+構文的に有効なハンドル（既存のTLDがあるかどうかはわからない）：
 
 ```
 jay.bsky.social
 8.cn
-name.t--t        // not a real TLD, but syntax ok
+name.t--t        // 実際のTLDではありませんが、構文はOK
 XX.LCS.MIT.EDU
 a.co
 xn--notarealidn.com
 xn--fiqa61au8b7zsevnm8ak20mc4a87e.xn--fiqs8s
 xn--ls8h.test
-example.t        // not a real TLD, but syntax ok
+example.t        // 実際のTLDではありませんが、構文はOK
 ```
 
-Invalid syntax:
+構文エラー：
 
 ```
 jo@hn.test
@@ -88,7 +89,7 @@ org
 name.org.
 ```
 
-Valid syntax, but must always fail resolution due to other restrictions:
+構文は有効ですが、他の制限のために常に解決に失敗する必要がある：
 
 ```
 2gzyxa5ihm7nsggfxnu52rck2vv4rvmdlkiu3zzui5du4xyclen53wid.onion
@@ -96,33 +97,31 @@ laptop.local
 blah.arpa
 ```
 
-## Handle Resolution
+## ハンドルの解決
 
-Handles have a limited role in atproto, and need to be resolved to a DID in almost all situations. Resolution mechanisms must demonstrate a reasonable degree of authority over the domain name at a point in time, and need to be relatively efficient to look up. There are currently two supported resolution mechanisms, one using a TXT DNS record containing the DID, and another over HTTPS at a special `/.well-known/` URL.
+ハンドルはatprotoで限定的な役割を果たし、ほぼすべての状況でDIDに解決する必要があります。解決メカニズムは特定の時点でドメイン名に対する合理的な権限を示し、効率的に検索できる必要があります。現在サポートされている解決メカニズムは、DIDを含むTXT DNSレコードを使用するものと、特別な`/.well-known/` URLを使用するものの2つです。
 
-Clients can rely on network services (eg, their PDS) to resolve handles for them, using the `com.atproto.identity.resolveHandle` endpoint, and don't usually need to implement resolution directly themselves.
+クライアントはハンドルを解決するためにネットワークサービス（たとえば、PDS）を利用でき、`com.atproto.identity.resolveHandle`エンドポイントを使用してハンドルを解決する必要はありません。通常は解決を直接実装する必要はありません。
 
-The DNS TXT method is the recommended and preferred resolution method for individual handle configuration, but services should fully support both methods. The intended use-case for the HTTPS method is existing large-scale web services which may not have the infrastructure to automate the registration of thousands or millions of DNS TXT records.
+DNS TXTメソッドは個々のハンドル構成のための推奨される解決メソッドですが、サービスは両方のメソッドを完全にサポートする必要があります。HTTPSメソッドの想定される使用ケースは、数千または数百万のDNS TXTレコードの登録を自動化するインフラを持っていない既存の大規模Webサービスです。
 
-Handles should not be trusted or considered valid until the DID is also resolved and the current DID document is confirmed to link back to the handle. The link between handle and DID must be confirmed bidirectionally, otherwise anybody could create handle aliases for third-party accounts.
+ハンドルは、DIDも解決され、現在のDIDドキュメントがハンドルに戻るように確認されるまで信頼されたり、有効と見なされてはいけません。ハンドルとDIDの間のリンクは双方向に確認されなければならず、そうでないと誰でもサードパーティアカウントのためにハンドルエイリアスを作成できてしまいます。
 
-### DNS TXT Method
+### DNS TXTメソッド
 
-For this resolution method, a DNS TXT record is registered for the `_atproto` sub-domain under the handle hostname. The record value should have the prefix `did=`, followed by the full domain. This method aligns with [RFC-1464](https://www.rfc-editor.org/rfc/rfc1464.html), "Using the Domain Name System To Store Arbitrary String Attributes".
+この解決方法では、`_atproto`サブドメインの下にハンドルホスト名のためにDNS TXTレコードが登録されます。レコードの値は、フルドメインに続いて`did=`プレフィックスを持つべきです。この方法は[RFC-1464](https://www.rfc-editor.org/rfc/rfc1464.html)、"Using the Domain Name System To Store Arbitrary String Attributes"に準拠しています。
 
-For example, the handle `bsky.app` would have a TXT record on the name `_atproto.bsky.app`, and the value would look like `did=did:plc:z72i7hdynmk6r22z27h6tvur`.
+例えば、ハンドル`bsky.app`は、名前が`_atproto.bsky.app`であるTXTレコードを持ち、値は`did=did:plc:z72i7hdynmk6r22z27h6tvur`のようになります。
 
-Any TXT records with values not starting with `did=` should be ignored. Only a single valid record should exist at any point in time. If multiple valid records with different DIDs are present, resolution should fail. In this case resolution can be re-tried after a delay, or using a recursive resolver.
+`did=`で始まらない値を持つTXTレコードは無視されるべきです。任意の時点で単一の有効なレコードのみ存在すべきであり、異なるDIDを持つ複数の有効なレコードが存在する場合は、解決は失敗すべきです。この場合、解決は遅延後に再試行するか、または再帰的なリゾルバを使用することができます。
 
-Note that very long handles can not be resolved using this method if the additional `_atproto.` name segment pushes the overall name over the 253 character maximum for DNS queries. The HTTPS method will work for such handles.
+非常に長いハンドルは、追加の`_atproto.`名前セグメントがDNSクエリの最大253文字を超える場合、この方法を使用して解決できません。そのようなハンドルにはHTTPSメソッドが適しています。DNSSECは必要ありません。
 
-DNSSEC is not required.
+### HTTPS well-knownメソッド
 
-### HTTPS well-known Method
+この解決方法では、ハンドルドメインのウェブサーバーが特別な`/.well-known/atproto-did`パスで特別なwell-knownエンドポイントを実装します。有効なHTTP応答はHTTP成功ステータス（2xx）を持ち、`Content-Type`ヘッダが`text/plain`に設定され、HTTPボディにはプレフィックスやラッパー形式なしでDIDが含まれている必要があります。
 
-For this resolution method, a web server at the handle domain implements a special well-known endpoint at the path `/.well-known/atproto-did`. A valid HTTP response will have an HTTP success status (2xx), `Content-Type` header set to `text/plain`, and include the DID as the HTTP body with no prefix or wrapper formatting.
-
-For example, the handle `bsky.app` would be resolved by an GET request to `https://bsky.app/.well-known/atproto-did`, and a valid response would look like:
+例えば、ハンドル`bsky.app`は`https://bsky.app/.well-known/atproto-did`へのGETリクエストで解決され、有効な応答は次のようになります：
 
 ```
 HTTP/1.1 200 OK
@@ -134,53 +133,50 @@ did:plc:z72i7hdynmk6r22z27h6tvur
 
 ```
 
-The response `Content-Type` header does not need to be strictly verified.
+応答の`Content-Type`ヘッダは厳密に検証する必要はありません。応答ボディをDIDとして解析する前に、プレフィックスとサフィックスの空白を取り除くことは許容されています。
 
-It is acceptable to strip any prefix and suffix whitespace from the response body before attempting to parse as a DID.
+実際のハンドル解決には、デフォルトポート（443）でのセキュアなHTTPSが必要です。HTTPは主にローカル開発とテストに使用すべきです。
 
-Secure HTTPS on the default port (443) is required for all real-world handle resolutions. HTTP should only be used for local development and testing.
+HTTPリダイレクト（例：301、302）は許可されており、合理的な回数のリダイレクトホップまで許容されます。
 
-HTTP redirects (eg, 301, 302) are allowed, up to a reasonable number of redirect hops.
+### 無効なハンドル
 
-### Invalid Handles
+既知のDIDのハンドルが解決できなくなった場合、それを無効としてマークするべきです。APIの応答では、特別なハンドル値`handle.invalid`を使用して、特定のDIDに対する双方向に有効なハンドルが存在しないことを示すことができます。このハンドルはほとんどの状況（検索クエリ、APIリクエストなど）で使用できません。
 
-If the handle for a known DID is confirmed to no longer resolve, it should be marked as invalid. In API responses, the special handle value `handle.invalid` can be used to indicate that there is no bi-directionally valid handle for the given DID. This handle can not be used in most situations (search queries, API requests, etc).
+### 解決のベストプラクティス
 
-### Resolution Best Practices
+両方の解決方法を並行して試み、最初に利用可能な成功した結果を使用することは許容されています。2つのメソッドが対立する結果（異なるDID）を返す場合、DNS TXT結果が優先されますが、結果を曖昧として記録し、後で再試行することも許容されています。
 
-It is ok to attempt both resolution methods in parallel, and to use the first successful result available. If the two methods return conflicting results (aka, different DIDs), the DNS TXT result should be preferred, though it is also acceptable to record the result as ambiguous and try again later.
+サービスがハンドル解決結果を一定期間まで内部的にキャッシュし、定期的に再解決するのはベストプラクティスと見なされます。DNS TTL値はキャッシュの寿命を提供できますが、ハンドル解決のユースケースにはおそらく過剰なくらい（寿命が短すぎる）です。
 
-It is considered a best practice for services to cache handle resolution results internally, up to some lifetime, and re-resolve periodically. DNS TTL values provide a possible cache lifetime, but are probably too aggressive (aka, too short a lifetime) for the handle resolution use case.
+再帰的なDNSリゾルバの使用は、アカウントがハンドルを変更して確認を待っている使用ケースにとって重要な伝播遅延に役立ちます。
 
-Use of a recursive DNS resolver can help with propagation delays, which are important for the use case of an account changing their handle and waiting for confirmation.
+両方のテクニックで、比較的信頼できるネットワーク環境と構成から解決リクエストを開始することが有益です。解決リクエストを複数の地域と環境から実行することは、トラフィックの操作や意図的にセグメンテーションされた応答に関する懸念を緩和するのに役立ちます。
 
-With both techniques, it is beneficial to initiate resolution requests from a relatively trusted network environment and configuration. Running resolution requests from multiple regions and environments can help mitigate (though not fully resolve) concerns about traffic manipulation or intentionally segmented responses.
+## 使用および実装ガイドライン
 
+ユーザーインターフェースで`@jay.bsky.team`のように「at」記号でハンドルを前置することはできますが、これはレコード、API、および他のバックエンドコンテキストでは有効な構文ではありません。
 
-## Usage and Implementation Guidelines
+国際化ドメイン名（"IDN"または "punycode"）は低レベルのハンドル構文には直接関係ありません。エンコードされた形式では、IDNは既に有効なホスト名であり、したがって有効なハンドルです。そのようなハンドルはエンコードされたASCII形式で保存および送信されなければなりません。IDNハンドルはUnicodeとして解析および表示される場合がありますが、これはオプションです。
 
-Handles may be prefixed with the "at" symbol (like `@jay.bsky.team`) in user interfaces, but this is not a valid syntax for a handle in records, APIs, and other back-end contexts.
+ハンドルは大文字と小文字を区別しないため、ユーザーの入力を安全に正規化するために小文字（ASCII）形式に正規化できます。正規化（小文字）されたハンドルのみがレコードに保存され、アウトバウンドAPI呼び出しで使用されるべきです。アプリケーションはユーザー提供のケース情報を保存し、ハンドルを小文字以外で表示しようとしてはなりません。例えば、ハンドル入力文字列`BlueskyWeb.xyz`は、`blueskyweb.xyz`として正規化、保存、および表示されるべきです。非常に長い全小文字のハンドルは可読性とアクセシビリティの課題となり得ます。サブドメインの分離（ピリオド）、ハイフン、またはアプリケーションプロトコルでの「表示名」の使用が助けになります。
 
-Internationalized Domain Names ("IDN", or "punycode") are not directly relevant to the low-level handle syntax. In their encoded form, IDNs are already valid hostnames, and thus valid handles. Such handles must be stored and transmitted in encoded ASCII form. Handles that "look like" IDNs, but do not parse as valid IDNs, are valid handles, just as they are valid hostnames. Applications may, optionally, parse and display IDN handles as Unicode.
+非常に長いハンドルはユーザーインターフェース上の課題を提供することが知られていますが、プロトコルでは許容されており、アプリケーション開発者はそれらをサポートすることが期待されています。
 
-Handles are not case-sensitive, which means they can be safely normalized from user input to lower-case (ASCII) form. Only normalized (lowercase) handles should be stored in records or used in outbound API calls. Applications should not preserve user-provided case information and attempt to display handles in anything other than lower-case. For example, the handle input string `BlueskyWeb.xyz`  should be normalized, stored, and displayed as `blueskyweb.xyz`. Long all-lowercase handles can be a readability and accessibility challenge. Sub-domain separation (periods), hyphenation, or use of "display names" in application protocols can all help.
+よく知られたドメインに似たハンドルはセキュリティおよびなりすましの課題を提供します。例えば、`paypa1.com`や`paypal.cc`のようなハンドルが`paypal.com`と混同される可能性があります。非常に長いハンドルは先頭または末尾で切り詰められると類似の問題が発生する可能性があります（`paypal.com…`）。
 
-Very long handles are known to present user interface challenges, but they are allowed in the protocol, and application developers are expected to support them.
+ハンドルは一般的にはローカルコンテキストに切り詰められるべきではありません。例えば、`@jay.bsky.social`のハンドルは、`bsky.social`サービスのローカルコンテキストでも`@jay`として表示されるべきではありません。
 
-Handles which look similar to a well-known domain present security and impersonation challenges. For example, handles like `paypa1.com` or `paypal.cc` being confused for `paypal.com`. Very long handles can result in similar issues when truncated at the start or end (`paypal.com…`).
+ハンドルの「名前空間」（例：登録ドメインのサブドメインとして）のプロバイダは、任意の追加のハンドル制限を課すことができます。許容されるセグメントの長さを理にかなったものに制約し、`www`、`admin`、`mail`などの一般的なセグメント文字列を予約することが推奨されています。 "一般に許可されていないユーザー名"の複数の公共リストが出発点として使用できます。
 
-Handles should generally not be truncated to local context. For example, the handle `@jay.bsky.social` should not be displayed as `@jay`, even in the local context of a `bsky.social` service.
+実用的な観点から、ハンドルは最大で244文字まで制限されるべきです。これは、DNS検証が`_atproto.`プレフィックスと連動して動作し、その総体的な名前が有効である必要があるためです。
 
-Providers of handle "namespaces" (eg, as subdomains on a registered domain) may impose any additional limits on handles that they wish. It is recommended to constrain the allowed segment length to something reasonable, and to reserve a common set of segment strings like `www`, `admin`, `mail`, etc. There are multiple public lists of "commonly disallowed usernames" that can be used as a starting point.
+ハンドルホスト名は主流のDNSドメイン名であることが期待されます。非標準のTLDや非標準の命名システムを使用するハンドルは、atprotoエコシステム内の他のネットワークサービスおよびプロトコル実装との相互運用性に失敗する可能性があります。
 
-From a practical standpoint, handles should be limited to at most 244 characters, fewer than the 253 allowed for DNS names. This is because DNS verification works with the prefix `_atproto.`, which adds 9 characters, and that overall name needs to be valid.
+アカウントをホストするPDS実装は、アカウントのハンドルがもはや検証できない（`handle.invalid`状況）場合、レポジトリの変更を防ぐことができるかもしれません。他のネットワークサービスは通常、コンテンツの表示を継続すべきです（壊れを防ぐため）、可能であれば文脈に関するノートや警告インジケータを付けることがあります。
 
-Handle hostnames are expected to be mainstream DNS domain names, registered through the mainstream DNS name system. Handles with non-standard TLDs, or using non-standard naming systems, will fail to interoperate with other network services and protocol implementations in the atproto ecosystem.
+## 可能性のある将来の変更
 
-PDS implementations hosting an account *may* prevent repo mutation if the account's handle can no longer be verified (aka, `handle.invalid` situation). Other network services should generally continue to display the content (to prevent breakage), possibly with a contextual note or warning indicator.
+ハンドルの構文は比較的安定しています。
 
-## Possible Future Changes
-
-The handle syntax is relatively stable.
-
-It is conceivable that `.onion` handles would be allowed at some point in the future.
+将来的には`.onion`ハンドルがいずれかの時点で許可される可能性があります。

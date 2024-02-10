@@ -1,60 +1,57 @@
 ---
-title: Namespaced Identifiers (NSIDs)
-summary: A specification for global semantic IDs.
+title: ネームスペース識別子（NSID）
+summary: グローバルな意味論的IDのための仕様。
 ---
 
-# Namespaced Identifiers (NSIDs)
-Namespaced Identifiers (NSIDs) are used to reference Lexicon schemas for records, XRPC endpoints, and more.
+# ネームスペース識別子（NSID）
+ネームスペース識別子（NSID）は、レコード、XRPCエンドポイントなどのLexiconスキーマを参照するために使用されます。
 
-The basic structure and semantics of an NSID are a fully-qualified hostname in Reverse Domain-Name Order, followed by a simple name. The hostname part is the **domain authority,** and the final segment is the **name**.
+NSIDの基本的な構造とセマンティクスは、逆ドメイン名順の完全修飾ホスト名に続いてシンプルな名前です。ホスト名部分は**ドメイン権威（domain authority）** であり、最後のセグメントは**名前（name）** です。
 
+### NSID構文
 
-### NSID Syntax
+Lexicon文字列タイプ：`nsid`
 
-Lexicon string type: `nsid`
+NSIDのドメイン権威部分は、セグメントの順序が逆になった有効なハンドルでなければなりません。それに続く名前セグメントはASCIIキャメルケース文字列でなければなりません。
 
-The domain authority part of an NSID must be a valid handle with the order of segments reversed. That is followed by a name segment which must be an ASCII camel-case string.
+例えば、`com.example.fooBar`は構文的に有効なNSIDであり、`com.example`がドメイン権威であり、`fooBar`が名前セグメントです。
 
-For example, `com.example.fooBar` is a syntactically valid NSID, where `com.example` is the domain authority, and `fooBar` is the name segment.
+構文規則の包括的なリストは次の通りです：
 
-The comprehensive list of syntax rules is:
+- 全体のNSID：
+    - ASCII文字のみを含む必要があります
+    - ドメイン権威と名前をASCIIピリオド文字（`.`）で区切る必要があります
+    - 少なくとも3つのセグメントを持っている必要があります
+    - 最大で合計317文字までの長さになります
+- ドメイン権威：
+    - ピリオド（`.`）で区切られたセグメントで構成されています
+    - 最大253文字（ピリオドを含む）で、少なくとも2つのセグメントを含んでいる必要があります
+    - 各セグメントは1文字以上、最大63文字（ピリオドを含まない）まででなければなりません
+    - 許可される文字はASCIIの文字（`a-z`）、数字（`0-9`）、ハイフン（`-`）です
+    - セグメントはハイフンで始まるか終わることはできません
+    - 最初のセグメント（トップレベルドメイン）は数字で始まることはできません
+    - ドメイン権威は大文字小文字を区別しないため、小文字に正規化されるべきです（すなわち、ASCIIの `A-Z` を `a-z` に正規化）
+- 名前：
+    - 少なくとも1文字、最大63文字でなければなりません
+    - 許可される文字はASCIIの文字のみです（`A-Z`、`a-z`）
+    - 数字とハイフンは許可されていません
+    - 大文字小文字を区別し、正規化してはいけません
 
-- Overall NSID:
-    - must contain only ASCII characters
-    - separate the domain authority and the name by an ASCII period character (`.`)
-    - must have at least 3 segments
-    - can have a maximum total length of 317 characters
-- Domain authority:
-    - made of segments separated by periods (`.`)
-    - at most 253 characters (including periods), and must contain at least two segments
-    - each segment must have at least 1 and at most 63 characters (not including any periods)
-    - the allowed characters are ASCII letters (`a-z`), digits (`0-9`), and hyphens (`-`)
-    - segments can not start or end with a hyphen
-    - the first segment (the top-level domain) can not start with a numeric digit
-    - the domain authority is not case-sensitive, and should be normalized to lowercase (that is, normalize ASCII `A-Z` to `a-z`)
-- Name:
-    - must have at least 1 and at most 63 characters
-    - the allowed characters are ASCII letters only (`A-Z`, `a-z`)
-    - digits and hyphens are not allowed
-    - case-sensitive and should not be normalized
-
-A reference regex for NSID is:
+NSIDの参照用の正規表現は以下の通りです：
 
 ```
 /^[a-zA-Z]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+(\.[a-zA-Z]([a-zA-Z]{0,61}[a-zA-Z])?)$/
 ```
 
+### NSID構文のバリエーション
 
-### NSID Syntax Variations
+**フラグメント**は、スキーマ内の特定のサブフィールドを参照するために、一部の文脈でNSIDに追加することができます。フラグメントはASCIIハッシュ文字（`#`）でNSIDから分離されます。フラグメント識別子文字列（`#`の後）は、NSIDの最終セグメントと同じ構文制限を持っています：ASCIIアルファベット、1文字以上、制限された長さなど。
 
-A **fragment** may be appended to an NSID in some contexts to refer to a specific sub-field within the schema. The fragment is separated from the NSID by an ASCII hash character (`#`). The fragment identifier string (after the `#`) has the same syntax restrictions as the final segment of an NSID: ASCII alphabetic, one or more characters, length restricted, etc.
+NSIDのグループやパターンを参照する際には、末尾にASCIIスター文字（`*`）を追加して「グロブ」文字として使用できます。例えば、`com.atproto.*`は`atproto.com`ドメイン権威の下にある任意のNSIDを参照し、ネストしたサブドメイン（サブ権威）を含みます。独立した`*`は、すべての権威からのすべてのNSIDに一致します。現時点では、単一のスタート文字しか使用できず、それは最後の文字でなければなりません。そして、セグメント名の部分一致は許可されません。これはスタート文字がピリオドに続くか、すべてのNSIDに一致する裸のスターである必要があることを意味します。
 
-When referring to a group or pattern of NSIDs, a trailing ASCII star character (`*`) can be used as a "glob" character. For example, `com.atproto.*` would refer to any NSIDs under the `atproto.com` domain authority, including nested sub-domains (sub-authorities). A free-standing `*` would match all NSIDs from all authorities. Currently, there may be only a single start character; it must be the last character; and it must be at a segment boundary (no partial matching of segment names). This means the start character must be proceeded by a period, or be a bare star matching all NSIDs.
+### 例
 
-
-### Examples
-
-Syntactically valid NSIDs:
+構文的に有効なNSID：
 
 ```
 com.example.fooBar
@@ -64,31 +61,29 @@ a.b.c
 cn.8.lex.stuff
 ```
 
-Invalid NSIDs:
+無効なNSID：
 
 ```
 com.exa💩ple.thing
 com.example
 ```
 
+### 使用および実装ガイドライン
 
-### Usage and Implementation Guidelines
+**強く推奨される**ベストプラクティスは、ASCIIアルファベットのみを使用した権威ドメインを使用することです（つまり、数字やハイフンを含まないこと）。これにより、ほとんどのプログラミング言語でクライアントライブラリを生成することが格段に容易になります。
 
-A **strongly-encouraged** best practice is to use authority domains with only ASCII alphabetic characters (that is, no digits or hyphens). This makes it significantly easier to generate client libraries in most programming languages.
+表示、保存、および検証のために全体のNSIDは大文字小文字を区別します。ただし、ケースだけが異なる複数のNSIDを持つことは許されていません。ネームスペース権威は重複と混乱を防ぐ責任があります。実装はNSIDを強制的に小文字に変換してはいけません。
 
-The overall NSID is case-sensitive for display, storage, and validation. However, having multiple NSIDs that differ only by casing is not allowed. Namespace authorities are responsible for preventing duplication and confusion. Implementations should not force-lowercase NSIDs.
+「サブドメイン」を「ドメイン権威」の一部として使用して関連するNSIDを整理することは一般的です。例えば、NSID `com.atproto.sync.getHead` は `sync` セグメントを使用しています。これには `sync.atproto.com` ドメイン全体の制御が必要です。
 
-It is common to use "subdomains" as part of the "domain authority" to organize related NSIDs. For example, the NSID `com.atproto.sync.getHead` uses the `sync` segment. Note that this requires control of the full domain `sync.atproto.com`, in addition to the domain `atproto.com`.
+Lexicon言語のドキュメンテーションは、レコードタイプとXRPCメソッドのNSIDの選択と整理に関するスタイルガイドを提供します。簡単に言うと、レコードは通常、単数形の名詞です。XRPCメソッドは通常「動詞名詞」形式です。
 
-Lexicon language documentation will provide style guidelines on choosing and organizing NSIDs for both record types and XRPC methods. In short, records are usually single nouns, not pluralized. XRPC methods are usually in "verbNoun" form.
+### 可能な将来の変更
 
+NSID構文が最終セグメントでUnicode文字を許容するように緩和される可能性があります。
 
-### Possible Future Changes
+「グロブ」構文バリエーションは、単一レベルとネストした一致の区別をより明示的にするように変更されるかもしれません。
 
-It is conceivable that NSID syntax would be relaxed to allow Unicode characters in the final segment.
+将来的には「フラグメント」構文バリエーションがネストした参照を許容するように緩和される可能性があります。
 
-The "glob" syntax variation may be modified to extended to make the distinction between single-level and nested matching more explicit.
-
-The "fragment" syntax variation may be relaxed in the future to allow nested references.
-
-No automated mechanism for verifying control of a "domain authority" currently exists. Also, not automated mechanism exists for fetching a lexicon schema for a given NSID, or for enumerating all NSIDs for a base domain.
+現在、「ドメイン権威」の制御を検証する自動化されたメカニズムは存在しません。また、指定されたNSIDのためにLexiconスキーマを取得するための自動化されたメカニズムや、基本ドメインのすべてのNSIDを列挙するためのメカニズムも存在しません。

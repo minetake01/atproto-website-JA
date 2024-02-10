@@ -1,18 +1,18 @@
 ---
-title: Lexicon
-summary: A schema-driven interoperability framework
+title: Lexicon（辞書）
+summary: スキーマ駆動の相互運用性フレームワーク
 tldr:
- - Lexicon is a global schema system
- - It uses reverse-DNS names like "com.example.ping()"
- - The definitions are JSON documents, similar to JSON-Schema
- - It's currently used for HTTP endpoints, event streams, and repo records
+ - Lexiconはグローバルなスキーマシステムです
+ - com.example.ping()のような逆DNS名を使用します
+ - 定義はJSONドキュメントで、JSON-Schemaに似ています
+ - 現在はHTTPエンドポイント、イベントストリーム、およびリポジトリレコードに使用されています
 ---
 
-# Intro to Lexicon
+# Lexicon入門
 
-Lexicon is a schema system used to define RPC methods and record types. Every Lexicon schema is written in JSON, in a format similar to [JSON-Schema](https://json-schema.org/) for defining constraints.
+LexiconはRPCメソッドとレコードタイプを定義するためのスキーマシステムです。各Lexiconスキーマは、[JSON-Schema](https://json-schema.org/)と似た形式のJSONで書かれています。
 
-The schemas are identified using [NSIDs](/specs/nsid) which are a reverse-DNS format. Here are some example methods:
+これらのスキーマは、逆DNS形式の[NSID](/specs/nsid)を使用して識別されます。以下はいくつかの例です：
 
 ```typescript
 com.atproto.repo.getRecord()
@@ -21,7 +21,7 @@ app.bsky.feed.getPostThread()
 app.bsky.notification.listNotifications()
 ```
 
-And here are some example record types:
+そして、いくつかの例のレコードタイプ：
 
 ```typescript
 app.bsky.feed.post
@@ -30,31 +30,31 @@ app.bsky.actor.profile
 app.bsky.graph.follow
 ```
 
-The schema types, definition language, and validation constraints are described in the [Lexicon specification](/specs/lexicon), and representations in JSON and CBOR are described in the [Data Model specification](/specs/data-model).
+スキーマのタイプ、定義言語、およびバリデーションの制約については、[Lexicon仕様](/specs/lexicon)で説明されており、JSONとCBORでの表現は[データモデル仕様](/specs/data-model)で説明されています。
 
-## Why is Lexicon needed?
+## Lexiconが必要な理由
 
-**Interoperability.** An open network like atproto needs a way to agree on behaviors and semantics. Lexicon solves this while making it relatively simple for developers to introduce new schemas.
+**相互運用性。** atprotoのようなオープンネットワークは、振る舞いとセマンティクスに合意する方法が必要です。 Lexiconはこれを解決し、新しいスキーマを導入する際に開発者に対して比較的簡単にします。
 
-**Lexicon is not RDF.** While RDF is effective at describing data, it is not ideal for enforcing schemas. Lexicon is easier to use because it doesn't need the generality that RDF provides. In fact, Lexicon's schemas enable code-generation with types and validation, which makes life much easier!
+**LexiconはRDFではありません。** RDFはデータを記述するのに効果的ですが、スキーマを強制するには理想的ではありません。 LexiconはRDFが提供する一般性が不要なため、使用が容易です。実際、Lexiconのスキーマは型とバリデーションのコード生成を可能にし、これにより開発が大幅に簡素化されます。
 
-## HTTP API methods
+## HTTP APIメソッド
 
-The AT Protocol's API system, [XRPC](/specs/xrpc), is essentially a thin wrapper around HTTPS. Its purpose is to apply the Lexicon to HTTPS.
+ATプロトコルのAPIシステムである[XRPC](/specs/xrpc)は、基本的にはHTTPSの薄いラッパーです。その目的は、LexiconをHTTPSに適用することです。
 
-For example, a call to:
+例えば、以下の呼び出し：
 
 ```typescript
 com.example.getProfile()
 ```
 
-is actually just an HTTP request:
+実際にはただのHTTPリクエストです：
 
 ```text
 GET /xrpc/com.example.getProfile
 ```
 
-The schemas establish valid query parameters, request bodies, and response bodies.
+スキーマはクエリパラメータ、リクエストボディ、およびレスポンスボディの有効なものを確立します。
 
 ```json
 {
@@ -80,18 +80,18 @@ The schemas establish valid query parameters, request bodies, and response bodie
 }
 ```
 
-With code-generation, these schemas become very easy to use:
+コード生成を使用すると、これらのスキーマは非常に使いやすくなります：
 
 ```typescript
 await client.com.example.getProfile({user: 'bob.com'})
 // => {name: 'bob.com', did: 'did:plc:1234', displayName: '...', ...}
 ```
 
-## Record types
+## レコードタイプ
 
-Schemas define the possible values of a record. Every record has a "type" which maps to a schema and also establishes the URL of a record.
+スキーマはレコードの可能な値を定義します。各レコードには「タイプ」があり、それはスキーマにマッピングされ、またレコードのURLを確立します。
 
-For instance, this "follow" record:
+例えば、この「follow」レコード：
 
 ```json
 {
@@ -101,13 +101,13 @@ For instance, this "follow" record:
 }
 ```
 
-...would have a URL like:
+...は次のようなURLを持ちます：
 
 ```text
 at://bob.com/com.example.follow/12345
 ```
 
-...and a schema like:
+...および次のようなスキーマ：
 
 ```json
 {
@@ -126,11 +126,11 @@ at://bob.com/com.example.follow/12345
 }
 ```
 
-## Tokens
+## トークン
 
-Tokens declare global identifiers which can be used in data.
+トークンはデータで使用できるグローバルな識別子を宣言します。
 
-Let's say a record schema wanted to specify three possible states for a traffic light: 'red', 'yellow', and 'green'.
+例えば、レコードスキーマが交通信号の3つの可能な状態を指定したい場合を考えてみましょう：'red'、'yellow'、および'green'。
 
 ```json
 {
@@ -147,9 +147,9 @@ Let's say a record schema wanted to specify three possible states for a traffic 
 }
 ```
 
-This is perfectly acceptable, but it's not extensible. You could never add new states, like "flashing yellow" or "purple" (who knows, it could happen).
+これは完璧に受け入れられるものですが、拡張可能ではありません。新しい状態を追加することはできません。例えば、「flashing yellow」や「purple」といった新しい状態を追加することはできません。
 
-To add flexibility, you could remove the enum constraint and just document the possible values:
+柔軟性を追加するために、enumの制約を削除し、可能な値を文書化するだけでもよいです：
 
 ```json
 {
@@ -169,9 +169,9 @@ To add flexibility, you could remove the enum constraint and just document the p
 }
 ```
 
-This isn't bad, but it lacks specificity. People inventing new values for state are likely to collide with each other, and there won't be clear documentation on each state.
+これは悪くありませんが、具体性が不足しています。状態の新しい値を発明する人々はお互いに衝突しやすく、各状態についての明確な文書がないかもしれません。
 
-Instead, you can define Lexicon tokens for the values you use:
+代わりに、使用する値のためにLexiconトークンを定義できます：
 
 ```json
 {
@@ -194,7 +194,7 @@ Instead, you can define Lexicon tokens for the values you use:
 }
 ```
 
-This gives us unambiguous values to use in our trafficLight state. The final schema will still use flexible validation, but other teams will have more clarity on where the values originate from and how to add their own:
+これにより、trafficLightの状態で使う明確な値が得られます。最終的なスキーマは柔軟なバリデーションを使用しますが、他のチームは値の起源と独自の値を追加する方法についてより明確に理解できます：
 
 ```json
 {
@@ -218,12 +218,12 @@ This gives us unambiguous values to use in our trafficLight state. The final sch
 }
 ```
 
-## Versioning
+## バージョニング
 
-Once a schema is published, it can never change its constraints. Loosening a constraint (adding possible values) will cause old software to fail validation for new data, and tightening a constraint (removing possible values) will cause new software to fail validation for old data. As a consequence, schemas may only add optional constraints to previously unconstrained fields.
+一度スキーマが公開されると、制約を変更することはできません。制約を緩める（可能な値を追加する）と、古いソフトウェアが新しいデータの検証に失敗します。制約を強化する（可能な値を削除する）と、新しいソフトウェアが古いデータの検証に失敗します。結果として、スキーマは以前に制約のないフィールドにのみオプションの制約を追加できます。
 
-If a schema must change a previously-published constraint, it should be published as a new schema under a new NSID.
+スキーマは機械可読でネットワークアクセス可能に設計されています。現在はネットワーク上でスキーマが利用可能である必要がないため、スキーマを公開することが必須ではありませんが、メソッドの消費者が単一の正規および信頼性のある表現が利用可能であるようにするために強く勧められています。
 
-## Schema distribution
+## スキーマの配布
 
-Schemas are designed to be machine-readable and network-accessible. While it is not currently _required_ that a schema is available on the network, it is strongly advised to publish schemas so that a single canonical & authoritative representation is available to consumers of the method.
+スキーマは機械可読でネットワークアクセス可能なように設計されています。現在はネットワーク上でスキーマが利用可能であることが _必須ではありません_ が、メソッドのコンシューマに対して単一の正規で信頼性のある表現が利用可能であるように、スキーマを公開することが強く勧められています。
