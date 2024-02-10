@@ -6,6 +6,7 @@ export default function Meta({ title, description, image }) {
     description || 'A social networking technology created by Bluesky.'
   return (
     <Head>
+      <meta name="robots" content="noindex" />
       <title>{title}</title>
       <meta property="og:title" content={title} />
       <meta property="og:type" content="article" />
